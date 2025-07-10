@@ -4,7 +4,7 @@ const Category = require("../models/Category")
 const Order = require("../models/Order")
 const User = require("../models/User")
 const SEO = require("../models/SEO")
-const Campaign = require("../models/Campaign")
+const Campaign = require("../models/Compaign")
 const { uploadToCloudinary } = require("../utils/cloudinary")
 
 // Marketing Analytics
