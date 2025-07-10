@@ -1,8 +1,9 @@
+const dotenv = require("dotenv");
+const path = require('path')
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 const express = require("express")
 const mongoose = require("mongoose")
 const cors = require("cors")
-const dotenv = require("dotenv")
-const path = require("path")
 
 // Load environment variables
 dotenv.config()
@@ -23,16 +24,16 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }))
 app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
 // Routes
-app.use("/api/auth", require("../routes/auth"))
-app.use("/api/products", require("../routes/products"))
+// app.use("/api/auth", require("../routes/auth"))
+app.use("/api/products", require("../routes/product"))
 app.use("/api/categories", require("../routes/categories"))
 app.use("/api/cart", require("../routes/cart"))
-app.use("/api/orders", require("../routes/orders"))
-app.use("/api/reviews", require("../routes/reviews"))
+app.use("/api/orders", require("../routes/order"))
+app.use("/api/reviews", require("../routes/review"))
 app.use("/api/wishlist", require("../routes/wishlist"))
-app.use("/api/coupons", require("../routes/coupons"))
-app.use("/api/banners", require("../routes/banners"))
-app.use("/api/returns", require("../routes/returns"))
+app.use("/api/coupons", require("../routes/coupon"))
+app.use("/api/banners", require("../routes/banner"))
+app.use("/api/returns", require("../routes/return"))
 app.use("/api/admin", require("../routes/admin"))
 app.use("/api/digital-marketer", require("../routes/digitalMarketer"))
 app.use("/api/shiprocket", require("../routes/shiprocket"))
@@ -57,7 +58,7 @@ app.use((err, req, res, next) => {
 })
 
 // 404 handler
-app.use("*", (req, res) => {
+app.use("*/", (req, res) => {
   res.status(404).json({
     success: false,
     message: "Route not found",
