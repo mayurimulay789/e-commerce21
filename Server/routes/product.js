@@ -1,4 +1,6 @@
-const express = require("express")
+const express = require("express");
+const router = express.Router();
+
 const {
   getProducts,
   getTrendingProducts,
@@ -8,19 +10,18 @@ const {
   updateProduct,
   deleteProduct,
   addReview,
-} = require("../controllers/productController")
-const { auth, adminAuth } = require("../middleware/auth")
-const upload = require("../middleware/upload")
+} = require("../controllers/productController"); // adjust path if needed
 
-const router = express.Router()
+const { auth, adminAuth } = require("../middleware/auth");
+const upload = require("../middleware/upload");
 
-router.get("/", getProducts)
-router.get("/trending", getTrendingProducts)
-router.get("/new-arrivals", getNewArrivals)
-router.get("/:id", getProduct)
-router.post("/", auth, adminAuth, upload.array("images", 10), createProduct)
-router.put("/:id", auth, adminAuth, upload.array("images", 10), updateProduct)
-router.delete("/:id", auth, adminAuth, deleteProduct)
-router.post("/:id/reviews", auth, upload.array("images", 5), addReview)
+router.get("/", getProducts);
+router.get("/trending", getTrendingProducts);
+router.get("/new-arrivals", getNewArrivals);
+router.get("/:id", getProduct);
+router.post("/", auth, adminAuth, upload.array("images", 10), createProduct);
+router.put("/:id", auth, adminAuth, upload.array("images", 10), updateProduct);
+router.delete("/:id", auth, adminAuth, deleteProduct);
+router.post("/:id/reviews", auth, upload.array("images", 5), addReview);
 
-module.exports = router
+module.exports = router;

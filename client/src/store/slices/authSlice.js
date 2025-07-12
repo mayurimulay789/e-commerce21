@@ -14,7 +14,7 @@ import {
   signInWithPhoneNumber,
   RecaptchaVerifier,
 } from "firebase/auth"
-import { auth, cleanupRecaptcha } from "../../config/firebase"
+import { auth, cleanupRecaptcha } from "../../config/config.js"
 import axios from "axios"
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";

@@ -1,4 +1,4 @@
-const admin = require("firebase-admin")
+const admin = require('firebase-admin')
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcryptjs")
 const User = require("../models/User")

@@ -1,78 +1,67 @@
-const Product = require("../models/Product")
-const Category = require("../models/Category")
-const { uploadToCloudinary } = require("../utils/cloudinary")
+const Product = require("../models/Product");
+const Category = require("../models/Category");
+const { uploadToCloudinary } = require("../utils/cloudinary");
+
+// Helper to parse JSON fields safely
+const parseJson = (data, fallback) => {
+  try {
+    return JSON.parse(data);
+  } catch {
+    return fallback;
+  }
+};
 
 // Get all products with filters
 exports.getProducts = async (req, res) => {
   try {
-    const { category, tag, minPrice, maxPrice, sort, page = 1, limit = 12, search } = req.query
+    const { category, tag, minPrice, maxPrice, sort, page = 1, limit = 12, search } = req.query;
 
-    const query = { isActive: true }
+    const query = { isActive: true };
 
-    // Category filter
-    if (category) {
-      query.category = category
-    }
-
-    // Tag filter
-    if (tag) {
-      query.tags = { $in: [tag] }
-    }
-
-    // Price filter
+    if (category) query.category = category;
+    if (tag) query.tags = { $in: [tag] };
     if (minPrice || maxPrice) {
-      query.price = {}
-      if (minPrice) query.price.$gte = Number(minPrice)
-      if (maxPrice) query.price.$lte = Number(maxPrice)
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
     }
-
-    // Search filter
     if (search) {
-      query.$or = [{ name: { $regex: search, $options: "i" } }, { description: { $regex: search, $options: "i" } }]
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
     }
 
-    // Sort options
-    let sortOption = {}
-    switch (sort) {
-      case "price-low":
-        sortOption = { price: 1 }
-        break
-      case "price-high":
-        sortOption = { price: -1 }
-        break
-      case "rating":
-        sortOption = { "rating.average": -1 }
-        break
-      case "newest":
-        sortOption = { createdAt: -1 }
-        break
-      default:
-        sortOption = { createdAt: -1 }
-    }
-
-    const skip = (page - 1) * limit
+    const sortOptions = {
+      "price-low": { price: 1 },
+      "price-high": { price: -1 },
+      rating: { "rating.average": -1 },
+      newest: { createdAt: -1 },
+    };
+    const sortOption = sortOptions[sort] || { createdAt: -1 };
 
     const products = await Product.find(query)
       .populate("category", "name slug")
       .sort(sortOption)
-      .skip(skip)
-      .limit(Number(limit))
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
 
-    const total = await Product.countDocuments(query)
+    const total = await Product.countDocuments(query);
 
     res.status(200).json({
+      success: true,
       products,
       pagination: {
         current: Number(page),
         pages: Math.ceil(total / limit),
         total,
       },
-    })
+    });
   } catch (error) {
-    console.error("Get products error:", error)
-    res.status(500).json({ message: "Failed to fetch products" })
+    console.error("Get products error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch products" });
   }
-}
+};
 
 // Get trending products
 exports.getTrendingProducts = async (req, res) => {
@@ -83,14 +72,14 @@ exports.getTrendingProducts = async (req, res) => {
     })
       .populate("category", "name slug")
       .sort({ "rating.average": -1, createdAt: -1 })
-      .limit(12)
+      .limit(12);
 
-    res.status(200).json({ products })
+    res.status(200).json({ success: true, products });
   } catch (error) {
-    console.error("Get trending products error:", error)
-    res.status(500).json({ message: "Failed to fetch trending products" })
+    console.error("Get trending products error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch trending products" });
   }
-}
+};
 
 // Get new arrivals
 exports.getNewArrivals = async (req, res) => {
@@ -101,60 +90,46 @@ exports.getNewArrivals = async (req, res) => {
     })
       .populate("category", "name slug")
       .sort({ createdAt: -1 })
-      .limit(12)
+      .limit(12);
 
-    res.status(200).json({ products })
+    res.status(200).json({ success: true, products });
   } catch (error) {
-    console.error("Get new arrivals error:", error)
-    res.status(500).json({ message: "Failed to fetch new arrivals" })
+    console.error("Get new arrivals error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch new arrivals" });
   }
-}
+};
 
 // Get single product
 exports.getProduct = async (req, res) => {
   try {
-    const { id } = req.params
-
-    const product = await Product.findById(id).populate("category", "name slug").populate("reviews.user", "name")
+    const product = await Product.findById(req.params.id)
+      .populate("category", "name slug")
+      .populate("reviews.user", "name");
 
     if (!product) {
-      return res.status(404).json({ message: "Product not found" })
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    res.status(200).json({ product })
+    res.status(200).json({ success: true, product });
   } catch (error) {
-    console.error("Get product error:", error)
-    res.status(500).json({ message: "Failed to fetch product" })
+    console.error("Get product error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch product" });
   }
-}
+};
 
 // Create product (Admin only)
 exports.createProduct = async (req, res) => {
   try {
     const {
-      name,
-      description,
-      price,
-      originalPrice,
-      category,
-      subcategory,
-      sizes,
-      colors,
-      tags,
-      stock,
-      weight,
-      dimensions,
-    } = req.body
+      name, description, price, originalPrice, category, subcategory,
+      sizes, colors, tags, stock, weight, dimensions,
+    } = req.body;
 
-    // Upload images to Cloudinary
-    const images = []
-    if (req.files && req.files.length > 0) {
+    const images = [];
+    if (req.files && req.files.length) {
       for (const file of req.files) {
-        const result = await uploadToCloudinary(file.buffer, "products")
-        images.push({
-          url: result.secure_url,
-          alt: name,
-        })
+        const result = await uploadToCloudinary(file.buffer, "products");
+        images.push({ url: result.secure_url, alt: name });
       }
     }
 
@@ -166,147 +141,120 @@ exports.createProduct = async (req, res) => {
       images,
       category,
       subcategory,
-      sizes: sizes ? JSON.parse(sizes) : [],
-      colors: colors ? JSON.parse(colors) : [],
-      tags: tags ? JSON.parse(tags) : [],
+      sizes: parseJson(sizes, []),
+      colors: parseJson(colors, []),
+      tags: parseJson(tags, []),
       stock: Number(stock) || 0,
       weight: weight ? Number(weight) : undefined,
-      dimensions: dimensions ? JSON.parse(dimensions) : undefined,
-    })
+      dimensions: parseJson(dimensions, undefined),
+    });
 
-    await product.save()
+    await product.save();
+    await Category.findByIdAndUpdate(category, { $inc: { productCount: 1 } });
 
-    // Update category product count
-    await Category.findByIdAndUpdate(category, { $inc: { productCount: 1 } })
-
-    res.status(201).json({
-      message: "Product created successfully",
-      product,
-    })
+    res.status(201).json({ success: true, message: "Product created successfully", product });
   } catch (error) {
-    console.error("Create product error:", error)
-    res.status(500).json({ message: "Failed to create product" })
+    console.error("Create product error:", error);
+    res.status(500).json({ success: false, message: "Failed to create product" });
   }
-}
+};
 
 // Update product (Admin only)
 exports.updateProduct = async (req, res) => {
   try {
-    const { id } = req.params
-    const updateData = req.body
+    const { id } = req.params;
+    const updateData = req.body;
 
-    const product = await Product.findById(id)
+    const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ message: "Product not found" })
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // Handle image uploads
-    if (req.files && req.files.length > 0) {
-      const newImages = []
+    if (req.files && req.files.length) {
+      const newImages = [];
       for (const file of req.files) {
-        const result = await uploadToCloudinary(file.buffer, "products")
-        newImages.push({
-          url: result.secure_url,
-          alt: updateData.name || product.name,
-        })
+        const result = await uploadToCloudinary(file.buffer, "products");
+        newImages.push({ url: result.secure_url, alt: updateData.name || product.name });
       }
-      updateData.images = [...product.images, ...newImages]
+      updateData.images = [...product.images, ...newImages];
     }
 
-    // Parse JSON fields
-    if (updateData.sizes) updateData.sizes = JSON.parse(updateData.sizes)
-    if (updateData.colors) updateData.colors = JSON.parse(updateData.colors)
-    if (updateData.tags) updateData.tags = JSON.parse(updateData.tags)
-    if (updateData.dimensions) updateData.dimensions = JSON.parse(updateData.dimensions)
+    updateData.sizes = parseJson(updateData.sizes, product.sizes);
+    updateData.colors = parseJson(updateData.colors, product.colors);
+    updateData.tags = parseJson(updateData.tags, product.tags);
+    updateData.dimensions = parseJson(updateData.dimensions, product.dimensions);
 
-    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true }).populate(
-      "category",
-      "name slug",
-    )
+    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
+      .populate("category", "name slug");
 
-    res.status(200).json({
-      message: "Product updated successfully",
-      product: updatedProduct,
-    })
+    res.status(200).json({ success: true, message: "Product updated successfully", product: updatedProduct });
   } catch (error) {
-    console.error("Update product error:", error)
-    res.status(500).json({ message: "Failed to update product" })
+    console.error("Update product error:", error);
+    res.status(500).json({ success: false, message: "Failed to update product" });
   }
-}
+};
 
 // Delete product (Admin only)
 exports.deleteProduct = async (req, res) => {
   try {
-    const { id } = req.params
-
-    const product = await Product.findById(id)
+    const product = await Product.findById(req.params.id);
     if (!product) {
-      return res.status(404).json({ message: "Product not found" })
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    await Product.findByIdAndDelete(id)
+    await Product.findByIdAndDelete(req.params.id);
+    await Category.findByIdAndUpdate(product.category, { $inc: { productCount: -1 } });
 
-    // Update category product count
-    await Category.findByIdAndUpdate(product.category, { $inc: { productCount: -1 } })
-
-    res.status(200).json({ message: "Product deleted successfully" })
+    res.status(200).json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
-    console.error("Delete product error:", error)
-    res.status(500).json({ message: "Failed to delete product" })
+    console.error("Delete product error:", error);
+    res.status(500).json({ success: false, message: "Failed to delete product" });
   }
-}
+};
 
 // Add product review
 exports.addReview = async (req, res) => {
   try {
-    const { id } = req.params
-    const { rating, comment } = req.body
-    const userId = req.user.userId
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+    const userId = req.user.userId;
 
-    const product = await Product.findById(id)
+    const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ message: "Product not found" })
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // Check if user already reviewed
-    const existingReview = product.reviews.find((review) => review.user.toString() === userId)
-
+    const existingReview = product.reviews.find(r => r.user.toString() === userId);
     if (existingReview) {
-      return res.status(400).json({ message: "You have already reviewed this product" })
+      return res.status(400).json({ success: false, message: "You have already reviewed this product" });
     }
 
-    // Upload review images if provided
-    const reviewImages = []
-    if (req.files && req.files.length > 0) {
+    const reviewImages = [];
+    if (req.files && req.files.length) {
       for (const file of req.files) {
-        const result = await uploadToCloudinary(file.buffer, "reviews")
-        reviewImages.push(result.secure_url)
+        const result = await uploadToCloudinary(file.buffer, "reviews");
+        reviewImages.push(result.secure_url);
       }
     }
 
-    // Add review
     product.reviews.push({
       user: userId,
       rating: Number(rating),
       comment,
       images: reviewImages,
-    })
+    });
 
-    // Update product rating
-    const totalRating = product.reviews.reduce((sum, review) => sum + review.rating, 0)
+    const totalRating = product.reviews.reduce((sum, r) => sum + r.rating, 0);
     product.rating = {
       average: totalRating / product.reviews.length,
       count: product.reviews.length,
-    }
+    };
 
-    await product.save()
+    await product.save();
 
-    res.status(201).json({
-      message: "Review added successfully",
-      product,
-    })
+    res.status(201).json({ success: true, message: "Review added successfully", product });
   } catch (error) {
-    console.error("Add review error:", error)
-    res.status(500).json({ message: "Failed to add review" })
+    console.error("Add review error:", error);
+    res.status(500).json({ success: false, message: "Failed to add review" });
   }
-}
+};

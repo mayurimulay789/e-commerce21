@@ -1,4 +1,4 @@
-const express = require("express")
+const express = require("express");
 const {
   registerWithEmail,
   loginWithEmail,
@@ -9,37 +9,37 @@ const {
   logout,
   deleteAccount,
   uploadAvatar,
-} = require("../controllers/authController")
-const { firebaseAuth, authorize } = require("../middleware/firebaseAuth")
-const { protect } = require("../middleware/auth")
-const { upload } = require("../middleware/upload")
-const { body, validationResult } = require("express-validator")
-const rateLimit = require("express-rate-limit")
+} = require("../controllers/authController");
+const { firebaseAuth, authorize } = require("../middleware/firebaseAuth");
+const { protect } = require("../middleware/auth");
+const upload = require("../middleware/upload"); // ✅ Corrected import
+const { body, validationResult } = require("express-validator");
+const rateLimit = require("express-rate-limit");
 
-const router = express.Router()
+const router = express.Router();
 
 // Rate limiting for auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 requests per windowMs
+  max: 10,
   message: {
     success: false,
     message: "Too many authentication attempts, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
-})
+});
 
 const passwordResetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // limit each IP to 3 password reset requests per hour
+  max: 3,
   message: {
     success: false,
     message: "Too many password reset attempts, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
-})
+});
 
 // Validation middleware for email registration
 const validateEmailRegistration = [
@@ -56,13 +56,13 @@ const validateEmailRegistration = [
     .withMessage("Name must be between 2 and 50 characters")
     .matches(/^[a-zA-Z\s]+$/)
     .withMessage("Name can only contain letters and spaces"),
-]
+];
 
 // Validation middleware for email login
 const validateEmailLogin = [
   body("email").isEmail().normalizeEmail().withMessage("Please enter a valid email address"),
   body("password").notEmpty().withMessage("Password is required"),
-]
+];
 
 // Validation middleware for profile update
 const validateProfileUpdate = [
@@ -75,16 +75,16 @@ const validateProfileUpdate = [
     .withMessage("Name can only contain letters and spaces"),
   body("dateOfBirth").optional().isISO8601().withMessage("Please enter a valid date"),
   body("gender").optional().isIn(["male", "female", "other"]).withMessage("Please select a valid gender option"),
-]
+];
 
 // Validation middleware for forgot password
 const validateForgotPassword = [
   body("email").isEmail().normalizeEmail().withMessage("Please enter a valid email address"),
-]
+];
 
 // Validation error handler
 const handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req)
+  const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
       success: false,
@@ -93,18 +93,18 @@ const handleValidationErrors = (req, res, next) => {
         field: error.path,
         message: error.msg,
       })),
-    })
+    });
   }
-  next()
-}
+  next();
+};
 
 // Public routes - Email Authentication
-router.post("/register/email", authLimiter, validateEmailRegistration, handleValidationErrors, registerWithEmail)
-router.post("/login/email", authLimiter, validateEmailLogin, handleValidationErrors, loginWithEmail)
-router.post("/forgot-password", passwordResetLimiter, validateForgotPassword, handleValidationErrors, forgotPassword)
+router.post("/register/email", authLimiter, validateEmailRegistration, handleValidationErrors, registerWithEmail);
+router.post("/login/email", authLimiter, validateEmailLogin, handleValidationErrors, loginWithEmail);
+router.post("/forgot-password", passwordResetLimiter, validateForgotPassword, handleValidationErrors, forgotPassword);
 
-// Public routes - Firebase Token Verification (handles both email and phone)
-router.post("/verify-token", verifyFirebaseToken)
+// Public routes - Firebase Token Verification
+router.post("/verify-token", verifyFirebaseToken);
 
 // Health check endpoint
 router.get("/health", (req, res) => {
@@ -113,62 +113,54 @@ router.get("/health", (req, res) => {
     message: "Auth service is running",
     timestamp: new Date().toISOString(),
     supportedMethods: ["email", "phone"],
-  })
-})
+  });
+});
 
-// Protected routes (require authentication)
-router.use(protect)
+// Protected routes
+router.use(protect);
 
-router.get("/profile", getProfile)
-router.put("/profile", validateProfileUpdate, handleValidationErrors, updateProfile)
-router.post("/upload-avatar", upload.single("avatar"), uploadAvatar)
-router.post("/logout", logout)
-router.delete("/account", deleteAccount)
+router.get("/profile", getProfile);
+router.put("/profile", validateProfileUpdate, handleValidationErrors, updateProfile);
+router.post("/upload-avatar", upload.single("avatar"), uploadAvatar); // ✅ Works now
+router.post("/logout", logout);
+router.delete("/account", deleteAccount);
 
 // Admin only routes
 router.get("/admin/users", authorize("admin"), async (req, res) => {
   try {
-    const User = require("../models/User")
-    const page = Number.parseInt(req.query.page) || 1
-    const limit = Math.min(Number.parseInt(req.query.limit) || 10, 100) // Max 100 per page
-    const skip = (page - 1) * limit
-    const search = req.query.search || ""
-    const role = req.query.role || ""
-    const authMethod = req.query.authMethod || ""
+    const User = require("../models/User");
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Math.min(Number.parseInt(req.query.limit) || 10, 100);
+    const skip = (page - 1) * limit;
+    const search = req.query.search || "";
+    const role = req.query.role || "";
+    const authMethod = req.query.authMethod || "";
 
-    // Build query
-    const query = { role: { $ne: "admin" } }
+    const query = { role: { $ne: "admin" } };
 
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
         { phoneNumber: { $regex: search, $options: "i" } },
-      ]
+      ];
     }
 
-    if (role && role !== "all") {
-      query.role = role
-    }
-
-    if (authMethod && authMethod !== "all") {
-      query.authMethod = authMethod
-    }
+    if (role && role !== "all") query.role = role;
+    if (authMethod && authMethod !== "all") query.authMethod = authMethod;
 
     const users = await User.find(query)
       .select("-firebaseUid -loginAttempts -lockUntil")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .lean()
+      .lean();
 
-    const total = await User.countDocuments(query)
-
-    // Get auth method statistics
+    const total = await User.countDocuments(query);
     const authStats = await User.aggregate([
       { $match: { role: { $ne: "admin" } } },
       { $group: { _id: "$authMethod", count: { $sum: 1 } } },
-    ])
+    ]);
 
     res.json({
       success: true,
@@ -181,31 +173,31 @@ router.get("/admin/users", authorize("admin"), async (req, res) => {
         hasPrev: page > 1,
       },
       authStats: authStats.reduce((acc, stat) => {
-        acc[stat._id] = stat.count
-        return acc
+        acc[stat._id] = stat.count;
+        return acc;
       }, {}),
-    })
+    });
   } catch (error) {
-    console.error("Get users error:", error)
+    console.error("Get users error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch users",
-    })
+    });
   }
-})
+});
 
 router.get("/admin/stats", authorize("admin"), async (req, res) => {
   try {
-    const User = require("../models/User")
+    const User = require("../models/User");
 
-    const totalUsers = await User.countDocuments({ role: { $ne: "admin" } })
-    const verifiedUsers = await User.countDocuments({ role: { $ne: "admin" }, isVerified: true })
-    const emailUsers = await User.countDocuments({ role: { $ne: "admin" }, authMethod: "email" })
-    const phoneUsers = await User.countDocuments({ role: { $ne: "admin" }, authMethod: "phone" })
+    const totalUsers = await User.countDocuments({ role: { $ne: "admin" } });
+    const verifiedUsers = await User.countDocuments({ role: { $ne: "admin" }, isVerified: true });
+    const emailUsers = await User.countDocuments({ role: { $ne: "admin" }, authMethod: "email" });
+    const phoneUsers = await User.countDocuments({ role: { $ne: "admin" }, authMethod: "phone" });
     const newUsersThisMonth = await User.countDocuments({
       role: { $ne: "admin" },
       createdAt: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
-    })
+    });
 
     res.json({
       success: true,
@@ -217,18 +209,18 @@ router.get("/admin/stats", authorize("admin"), async (req, res) => {
         newUsersThisMonth,
         unverifiedUsers: totalUsers - verifiedUsers,
       },
-    })
+    });
   } catch (error) {
-    console.error("Get admin stats error:", error)
+    console.error("Get admin stats error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch admin stats",
-    })
+    });
   }
-})
+});
 
-// Legacy routes for backward compatibility
-router.post("/register", authLimiter, validateEmailRegistration, handleValidationErrors, registerWithEmail)
-router.post("/login", authLimiter, validateEmailLogin, handleValidationErrors, loginWithEmail)
+// Legacy routes
+router.post("/register", authLimiter, validateEmailRegistration, handleValidationErrors, registerWithEmail);
+router.post("/login", authLimiter, validateEmailLogin, handleValidationErrors, loginWithEmail);
 
-module.exports = router
+module.exports = router;
