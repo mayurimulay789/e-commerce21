@@ -1,4 +1,4 @@
-const express = require("express")
+const express = require("express");
 const {
   createRazorpayOrder,
   verifyPaymentAndCreateOrder,
@@ -6,30 +6,19 @@ const {
   getOrderDetails,
   cancelOrder,
   trackOrder,
-} = require("../controllers/orderController")
-const { auth } = require("../middleware/auth")
+} = require("../controllers/orderController");
+const { protect } = require("../middleware/auth");
 
-const router = express.Router()
+const router = express.Router();
 
 // All routes require authentication
-router.use(auth)
+router.use(protect);
 
-// Create Razorpay order
-router.post("/create-razorpay-order", createRazorpayOrder)
+router.post("/create-razorpay-order", createRazorpayOrder);
+router.post("/verify-payment", verifyPaymentAndCreateOrder);
+router.get("/my-orders", getUserOrders);
+router.get("/:orderId", getOrderDetails);
+router.get("/:orderId/track", trackOrder);
+router.put("/:orderId/cancel", cancelOrder);
 
-// Verify payment and create order
-router.post("/verify-payment", verifyPaymentAndCreateOrder)
-
-// Get user orders
-router.get("/my-orders", getUserOrders)
-
-// Get specific order details
-router.get("/:orderId", getOrderDetails)
-
-// Track order
-router.get("/:orderId/track", trackOrder)
-
-// Cancel order
-router.put("/:orderId/cancel", cancelOrder)
-
-module.exports = router
+module.exports = router;

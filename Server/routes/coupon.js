@@ -1,16 +1,16 @@
-const express = require("express")
-const { validateCoupon, getAvailableCoupons } = require("../controllers/couponController")
-const { auth } = require("../middleware/auth")
+const express = require("express");
+const { validateCoupon, getAvailableCoupons } = require("../controllers/couponController");
+const { protect } = require("../middleware/auth");
 
-const router = express.Router()
+const router = express.Router();
 
 // All routes require authentication
-router.use(auth)
+router.use(protect);
 
 // Validate coupon
-router.post("/validate", validateCoupon)
+router.post("/validate", validateCoupon);
 
 // Get available coupons
-router.get("/available", getAvailableCoupons)
+router.get("/available", getAvailableCoupons);
 
-module.exports = router
+module.exports = router;

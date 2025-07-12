@@ -1,4 +1,4 @@
-const express = require("express")
+const express = require("express");
 const {
   getDashboardStats,
   getAllUsers,
@@ -10,66 +10,75 @@ const {
   createCoupon,
   updateCoupon,
   deleteCoupon,
-} = require("../controllers/adminController")
+} = require("../controllers/adminController");
+
 const {
   getProducts,
   getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
-} = require("../controllers/productController")
+} = require("../controllers/productController");
+
 const {
   getCategories,
   getCategoryBySlug,
   createCategory,
   updateCategory,
   deleteCategory,
-} = require("../controllers/categoryController")
-const { getAllBanners, createBanner, updateBanner, deleteBanner } = require("../controllers/bannerController")
-const { auth, adminAuth, digitalMarketerAuth } = require("../middleware/auth")
-const upload = require("../middleware/upload")
+} = require("../controllers/categoryController");
 
-const router = express.Router()
+const {
+  getAllBanners,
+  createBanner,
+  updateBanner,
+  deleteBanner,
+} = require("../controllers/bannerController");
+
+const { protect, adminAuth, digitalMarketerAuth } = require("../middleware/auth");
+const upload = require("../middleware/upload");
+
+const router = express.Router();
 
 // Apply authentication to all admin routes
-router.use(auth)
+router.use(protect);
 
 // Dashboard Stats (Admin only)
-router.get("/dashboard/stats", adminAuth, getDashboardStats)
+router.get("/dashboard/stats", adminAuth, getDashboardStats);
 
 // User Management (Admin only)
-router.get("/users", adminAuth, getAllUsers)
-router.put("/users/:userId/role", adminAuth, updateUserRole)
-router.delete("/users/:userId", adminAuth, deleteUser)
+router.get("/users", adminAuth, getAllUsers);
+router.put("/users/:userId/role", adminAuth, updateUserRole);
+router.delete("/users/:userId", adminAuth, deleteUser);
 
 // Order Management (Admin only)
-router.get("/orders", adminAuth, getAllOrders)
-router.put("/orders/:orderId/status", adminAuth, updateOrderStatus)
+router.get("/orders", adminAuth, getAllOrders);
+router.put("/orders/:orderId/status", adminAuth, updateOrderStatus);
 
 // Product Management (Admin only)
-router.get("/products", adminAuth, getProducts)
-router.get("/products/:id", adminAuth, getProduct)
-router.post("/products", adminAuth, upload.array("images", 10), createProduct)
-router.put("/products/:id", adminAuth, upload.array("images", 10), updateProduct)
-router.delete("/products/:id", adminAuth, deleteProduct)
+router.get("/products", adminAuth, getProducts);
+router.get("/products/:id", adminAuth, getProduct);
+router.post("/products", adminAuth, upload.array("images", 10), createProduct);
+router.put("/products/:id", adminAuth, upload.array("images", 10), updateProduct);
+router.delete("/products/:id", adminAuth, deleteProduct);
 
 // Category Management (Admin only)
-router.get("/categories", adminAuth, getCategories)
-router.get("/categories/:slug", adminAuth, getCategoryBySlug)
-router.post("/categories", adminAuth, upload.single("image"), createCategory)
-router.put("/categories/:id", adminAuth, upload.single("image"), updateCategory)
-router.delete("/categories/:id", adminAuth, deleteCategory)
+router.get("/categories", adminAuth, getCategories);
+router.get("/categories/:slug", adminAuth, getCategoryBySlug);
+router.post("/categories", adminAuth, upload.single("image"), createCategory);
+router.put("/categories/:id", adminAuth, upload.single("image"), updateCategory);
+router.delete("/categories/:id", adminAuth, deleteCategory);
 
-// Banner Management (Admin and Digital Marketer)
-router.get("/banners", digitalMarketerAuth, getAllBanners)
-router.post("/banners", digitalMarketerAuth, upload.single("image"), createBanner)
-router.put("/banners/:id", digitalMarketerAuth, upload.single("image"), updateBanner)
-router.delete("/banners/:id", digitalMarketerAuth, deleteBanner)
+// Banner Management (Admin & Digital Marketer)
+router.get("/banners", digitalMarketerAuth, getAllBanners);
+router.post("/banners", digitalMarketerAuth, upload.single("image"), createBanner);
+router.put("/banners/:id", digitalMarketerAuth, upload.single("image"), updateBanner);
+router.delete("/banners/:id", digitalMarketerAuth, deleteBanner);
 
 // Coupon Management (Admin only)
-router.get("/coupons", adminAuth, getAllCoupons)
-router.post("/coupons", adminAuth, createCoupon)
-router.put("/coupons/:couponId", adminAuth, updateCoupon)
-router.delete("/coupons/:couponId", adminAuth, deleteCoupon)
+router.get("/coupons", adminAuth, getAllCoupons);
+router.post("/coupons", adminAuth, createCoupon);
+router.put("/coupons/:couponId", adminAuth, updateCoupon);
+router.delete("/coupons/:couponId", adminAuth, deleteCoupon);
 
-module.exports = router
+module.exports = router;

@@ -1,4 +1,4 @@
-const express = require("express")
+const express = require("express");
 const {
   getHeroBanners,
   getPromoBanners,
@@ -6,17 +6,20 @@ const {
   updateBanner,
   deleteBanner,
   getAllBanners,
-} = require("../controllers/bannerController")
-const { auth, adminAuth, digitalMarketerAuth } = require("../middleware/auth")
-const upload = require("../middleware/upload")
+} = require("../controllers/bannerController");
+const { protect, digitalMarketerAuth } = require("../middleware/auth");
+const upload = require("../middleware/upload");
 
-const router = express.Router()
+const router = express.Router();
 
-router.get("/hero", getHeroBanners)
-router.get("/promo", getPromoBanners)
-router.get("/admin", auth, digitalMarketerAuth, getAllBanners)
-router.post("/", auth, digitalMarketerAuth, upload.single("image"), createBanner)
-router.put("/:id", auth, digitalMarketerAuth, upload.single("image"), updateBanner)
-router.delete("/:id", auth, digitalMarketerAuth, deleteBanner)
+// Public routes
+router.get("/hero", getHeroBanners);
+router.get("/promo", getPromoBanners);
 
-module.exports = router
+// Digital Marketer (admin) routes
+router.get("/admin", protect, digitalMarketerAuth, getAllBanners);
+router.post("/", protect, digitalMarketerAuth, upload.single("image"), createBanner);
+router.put("/:id", protect, digitalMarketerAuth, upload.single("image"), updateBanner);
+router.delete("/:id", protect, digitalMarketerAuth, deleteBanner);
+
+module.exports = router;

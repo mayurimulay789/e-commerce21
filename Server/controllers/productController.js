@@ -12,12 +12,11 @@ const parseJson = (data, fallback) => {
 };
 
 // Get all products with filters
-exports.getProducts = async (req, res) => {
+const getProducts = async (req, res) => {
   try {
     const { category, tag, minPrice, maxPrice, sort, page = 1, limit = 12, search } = req.query;
 
     const query = { isActive: true };
-
     if (category) query.category = category;
     if (tag) query.tags = { $in: [tag] };
     if (minPrice || maxPrice) {
@@ -64,7 +63,7 @@ exports.getProducts = async (req, res) => {
 };
 
 // Get trending products
-exports.getTrendingProducts = async (req, res) => {
+const getTrendingProducts = async (req, res) => {
   try {
     const products = await Product.find({
       isActive: true,
@@ -82,7 +81,7 @@ exports.getTrendingProducts = async (req, res) => {
 };
 
 // Get new arrivals
-exports.getNewArrivals = async (req, res) => {
+const getNewArrivals = async (req, res) => {
   try {
     const products = await Product.find({
       isActive: true,
@@ -100,7 +99,7 @@ exports.getNewArrivals = async (req, res) => {
 };
 
 // Get single product
-exports.getProduct = async (req, res) => {
+const getProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
       .populate("category", "name slug")
@@ -118,7 +117,7 @@ exports.getProduct = async (req, res) => {
 };
 
 // Create product (Admin only)
-exports.createProduct = async (req, res) => {
+const createProduct = async (req, res) => {
   try {
     const {
       name, description, price, originalPrice, category, subcategory,
@@ -160,7 +159,7 @@ exports.createProduct = async (req, res) => {
 };
 
 // Update product (Admin only)
-exports.updateProduct = async (req, res) => {
+const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -195,7 +194,7 @@ exports.updateProduct = async (req, res) => {
 };
 
 // Delete product (Admin only)
-exports.deleteProduct = async (req, res) => {
+const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -213,7 +212,7 @@ exports.deleteProduct = async (req, res) => {
 };
 
 // Add product review
-exports.addReview = async (req, res) => {
+const addReview = async (req, res) => {
   try {
     const { id } = req.params;
     const { rating, comment } = req.body;
@@ -257,4 +256,15 @@ exports.addReview = async (req, res) => {
     console.error("Add review error:", error);
     res.status(500).json({ success: false, message: "Failed to add review" });
   }
+};
+
+module.exports = {
+  getProducts,
+  getTrendingProducts,
+  getNewArrivals,
+  getProduct,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  addReview,
 };
