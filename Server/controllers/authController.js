@@ -39,6 +39,7 @@ const registerWithEmail = async (req, res) => {
         message: "Email, password, and name are required",
       })
     }
+console.log("Incoming body:", req.body)
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

@@ -1,3 +1,4 @@
+
 const dotenv = require("dotenv");
 const path = require('path')
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
@@ -9,6 +10,7 @@ const cors = require("cors")
 dotenv.config()
 
 const app = express()
+console.log("FIREBASE_PROJECT_ID:", process.env.FIREBASE_PROJECT_ID);
 
 // Middleware
 app.use(
@@ -17,8 +19,8 @@ app.use(
     credentials: true,
   }),
 )
-app.use(express.json({ limit: "50mb" }))
-app.use(express.urlencoded({ extended: true, limit: "50mb" }))
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")))
