@@ -18,19 +18,6 @@ console.log("MONGODB_URI:", process.env.MONGODB_URI ? "✅ Set" : "❌ Missing")
 console.log("FIREBASE_PROJECT_ID:", process.env.FIREBASE_PROJECT_ID ? "✅ Set" : "❌ Missing")
 
 // Middleware
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5173", // Vite default port
-      "http://localhost:4173", // Vite preview port
-      process.env.FRONTEND_URL,
-    ].filter(Boolean),
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-)
 
 app.use(express.json({ limit: "10mb" }))
 app.use(express.urlencoded({ extended: true, limit: "10mb" }))
@@ -56,7 +43,31 @@ app.get("/api/health", (req, res) => {
     database: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
   })
 })
+   app.use(
+  cors({
+    origin: [
+            'http://localhost:3000',
 
+      "http://localhost:5000",
+      "http://localhost:5173", // Vite default port
+      process.env.FRONTEND_URL,
+    ].filter(Boolean),
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+)
+app.options("*", cors()); // <-- make sure this is after `app.use(cors(...))`
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
+app.use(express.json());
 // Routes
 app.use("/api/auth", require("../routes/auth"))
 app.use("/api/products", require("../routes/product"))
