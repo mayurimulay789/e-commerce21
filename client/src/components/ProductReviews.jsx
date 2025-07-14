@@ -8,7 +8,9 @@ import { formatDistanceToNow } from "date-fns"
 
 const ProductReviews = ({ productId }) => {
   const dispatch = useDispatch()
-  const { currentProductReviews, reviewStats, loading } = useSelector((state) => state.review)
+const currentProductReviews = useSelector((state) => state.reviews?.currentProductReviews || [])
+const reviewStats = useSelector((state) => state.reviews?.reviewStats || { averageRating: 0, totalReviews: 0, ratingDistribution: {} })
+const loading = useSelector((state) => state.reviews?.loading || false)
   const { user } = useSelector((state) => state.auth)
 
   const [showReviewForm, setShowReviewForm] = useState(false)
@@ -36,21 +38,10 @@ const ProductReviews = ({ productId }) => {
     }
 
     try {
-      await dispatch(
-        createReview({
-          productId,
-          ...reviewForm,
-        }),
-      ).unwrap()
+      await dispatch(createReview({ productId, ...reviewForm })).unwrap()
 
       setShowReviewForm(false)
-      setReviewForm({
-        rating: 5,
-        title: "",
-        comment: "",
-        pros: "",
-        cons: "",
-      })
+      setReviewForm({ rating: 5, title: "", comment: "", pros: "", cons: "" })
     } catch (error) {
       console.error("Error submitting review:", error)
     }
@@ -64,15 +55,13 @@ const ProductReviews = ({ productId }) => {
     dispatch(likeReview(reviewId))
   }
 
-  const renderStars = (rating, size = "w-4 h-4") => {
-    return (
-      <div className="flex items-center">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star key={star} className={`${size} ${star <= rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
-        ))}
-      </div>
-    )
-  }
+  const renderStars = (rating, size = "w-4 h-4") => (
+    <div className="flex items-center">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star key={star} className={`${size} ${star <= rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
+      ))}
+    </div>
+  )
 
   const renderRatingDistribution = () => {
     const { ratingDistribution, totalReviews } = reviewStats
@@ -128,7 +117,7 @@ const ProductReviews = ({ productId }) => {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Overall Rating */}
           <div className="text-center">
-            <div className="mb-2 text-4xl font-bold text-gray-900">{reviewStats.averageRating}</div>
+            <div className="mb-2 text-4xl font-bold text-gray-900">{reviewStats.averageRating.toFixed(1)}</div>
             {renderStars(Math.round(reviewStats.averageRating), "w-6 h-6")}
             <div className="mt-2 text-gray-600">Based on {reviewStats.totalReviews} reviews</div>
           </div>
@@ -169,11 +158,7 @@ const ProductReviews = ({ productId }) => {
                   onClick={() => setReviewForm({ ...reviewForm, rating: star })}
                   className="focus:outline-none"
                 >
-                  <Star
-                    className={`w-6 h-6 ${
-                      star <= reviewForm.rating ? "text-yellow-400 fill-current" : "text-gray-300"
-                    }`}
-                  />
+                  <Star className={`w-6 h-6 ${star <= reviewForm.rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
                 </button>
               ))}
             </div>
@@ -229,10 +214,7 @@ const ProductReviews = ({ productId }) => {
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="px-6 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
-          >
+          <button type="submit" className="px-6 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700">
             Submit Review
           </button>
         </form>
@@ -250,11 +232,9 @@ const ProductReviews = ({ productId }) => {
               className="px-2 py-1 text-sm border border-gray-300 rounded"
             >
               <option value={0}>All ratings</option>
-              <option value={5}>5 stars</option>
-              <option value={4}>4 stars</option>
-              <option value={3}>3 stars</option>
-              <option value={2}>2 stars</option>
-              <option value={1}>1 star</option>
+              {[5,4,3,2,1].map(star => (
+                <option key={star} value={star}>{star} star{star > 1 ? "s" : ""}</option>
+              ))}
             </select>
           </div>
         </div>

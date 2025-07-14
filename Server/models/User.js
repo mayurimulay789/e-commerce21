@@ -43,8 +43,8 @@ const userSchema = new mongoose.Schema(
   {
     firebaseUid: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true, // Allow null values for users not yet verified
       index: true,
     },
     name: {
@@ -184,7 +184,6 @@ userSchema.pre("save", function (next) {
         }
       }
     })
-
     // If no default address, make the first one default
     if (!hasDefault && this.addresses.length > 0) {
       this.addresses[0].isDefault = true
@@ -207,14 +206,11 @@ userSchema.methods.incLoginAttempts = function () {
       },
     })
   }
-
   const updates = { $inc: { loginAttempts: 1 } }
-
   // Lock account after 5 failed attempts
   if (this.loginAttempts + 1 >= 5 && !this.isLocked) {
     updates.$set = { lockUntil: Date.now() + 2 * 60 * 60 * 1000 } // 2 hours
   }
-
   return this.updateOne(updates)
 }
 

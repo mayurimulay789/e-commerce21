@@ -2,13 +2,16 @@ const Banner = require("../models/Banner")
 const { uploadToCloudinary } = require("../utils/cloudinary")
 
 // Get hero banners
+// Get hero banners
 exports.getHeroBanners = async (req, res) => {
   try {
     const banners = await Banner.find({
       type: "hero",
       isActive: true,
-      $or: [{ startDate: { $exists: false } }, { startDate: { $lte: new Date() } }],
-      $or: [{ endDate: { $exists: false } }, { endDate: { $gte: new Date() } }],
+      $and: [
+        { $or: [{ startDate: { $exists: false } }, { startDate: { $lte: new Date() } }] },
+        { $or: [{ endDate: { $exists: false } }, { endDate: { $gte: new Date() } }] },
+      ],
     })
       .sort({ sortOrder: 1, createdAt: -1 })
       .populate("createdBy", "name")
@@ -20,14 +23,17 @@ exports.getHeroBanners = async (req, res) => {
   }
 }
 
+
 // Get promo banners
 exports.getPromoBanners = async (req, res) => {
   try {
     const banners = await Banner.find({
       type: "promo",
       isActive: true,
-      $or: [{ startDate: { $exists: false } }, { startDate: { $lte: new Date() } }],
-      $or: [{ endDate: { $exists: false } }, { endDate: { $gte: new Date() } }],
+      $and: [
+        { $or: [{ startDate: { $exists: false } }, { startDate: { $lte: new Date() } }] },
+        { $or: [{ endDate: { $exists: false } }, { endDate: { $gte: new Date() } }] },
+      ],
     })
       .sort({ sortOrder: 1, createdAt: -1 })
       .populate("createdBy", "name")
@@ -163,21 +169,24 @@ exports.deleteBanner = async (req, res) => {
 // Get all banners (Admin/Digital Marketer)
 exports.getAllBanners = async (req, res) => {
   try {
-    const { type } = req.query
+    const { type, isActive } = req.query;
 
-    const query = {}
-    if (type) query.type = type
+    const query = {};
+    if (type) query.type = type;
+    if (isActive !== undefined) query.isActive = isActive === "true";
 
-    // Digital marketers can only see their own banners
-    if (req.user.role === "digitalMarketer") {
-      query.createdBy = req.user.userId
+    // Digital marketers see only their banners
+    if (req.user && req.user.role === "digitalMarketer") {
+      query.createdBy = req.user.userId;
     }
 
-    const banners = await Banner.find(query).sort({ createdAt: -1 }).populate("createdBy", "name role")
+    const banners = await Banner.find(query)
+      .sort({ createdAt: -1 })
+      .populate("createdBy", "name role");
 
-    res.status(200).json({ banners })
+    res.status(200).json({ banners });
   } catch (error) {
-    console.error("Get all banners error:", error)
-    res.status(500).json({ message: "Failed to fetch banners" })
+    console.error("Get all banners error:", error);
+    res.status(500).json({ message: "Failed to fetch banners" });
   }
-}
+};

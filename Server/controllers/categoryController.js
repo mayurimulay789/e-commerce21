@@ -1,8 +1,11 @@
 const Category = require("../models/Category");
 const Product = require("../models/Product");
 const { uploadToCloudinary } = require("../utils/cloudinary");
+const slugify = require("slugify");
 
+// ===============================
 // Get all categories
+// ===============================
 const getCategories = async (req, res) => {
   try {
     const { showOnHomepage } = req.query;
@@ -23,7 +26,9 @@ const getCategories = async (req, res) => {
   }
 };
 
+// ===============================
 // Get category by slug
+// ===============================
 const getCategoryBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -43,7 +48,9 @@ const getCategoryBySlug = async (req, res) => {
   }
 };
 
+// ===============================
 // Create category (Admin only)
+// ===============================
 const createCategory = async (req, res) => {
   try {
     const { name, description, parentCategory, showOnHomepage, sortOrder } = req.body;
@@ -57,6 +64,7 @@ const createCategory = async (req, res) => {
       return res.status(400).json({ message: "Category already exists" });
     }
 
+    // Upload image if provided
     let imageData = {};
     if (req.file) {
       const result = await uploadToCloudinary(req.file.buffer, "categories");
@@ -66,8 +74,20 @@ const createCategory = async (req, res) => {
       };
     }
 
+    // Generate unique slug
+    let newSlug = slugify(name, { lower: true, strict: true });
+    let slugExists = await Category.findOne({ slug: newSlug });
+
+    let suffix = 1;
+    while (slugExists) {
+      newSlug = `${slugify(name, { lower: true, strict: true })}-${suffix}`;
+      slugExists = await Category.findOne({ slug: newSlug });
+      suffix++;
+    }
+
     const category = new Category({
       name,
+      slug: newSlug,
       description,
       image: imageData,
       parentCategory: parentCategory || null,
@@ -92,7 +112,9 @@ const createCategory = async (req, res) => {
   }
 };
 
+// ===============================
 // Update category (Admin only)
+// ===============================
 const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -103,7 +125,7 @@ const updateCategory = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    // Update image if provided
+    // Upload image if provided
     if (req.file) {
       const result = await uploadToCloudinary(req.file.buffer, "categories");
       category.image = {
@@ -112,8 +134,22 @@ const updateCategory = async (req, res) => {
       };
     }
 
-    // Update fields
-    if (name) category.name = name;
+    // Update name and generate unique slug if name changed
+    if (name) {
+      category.name = name;
+      let newSlug = slugify(name, { lower: true, strict: true });
+
+      let slugExists = await Category.findOne({ slug: newSlug, _id: { $ne: id } });
+      let suffix = 1;
+      while (slugExists) {
+        newSlug = `${slugify(name, { lower: true, strict: true })}-${suffix}`;
+        slugExists = await Category.findOne({ slug: newSlug, _id: { $ne: id } });
+        suffix++;
+      }
+
+      category.slug = newSlug;
+    }
+
     if (description !== undefined) category.description = description;
     if (showOnHomepage !== undefined) category.showOnHomepage = showOnHomepage;
     if (sortOrder !== undefined) category.sortOrder = sortOrder;
@@ -131,7 +167,9 @@ const updateCategory = async (req, res) => {
   }
 };
 
+// ===============================
 // Delete category (Admin only)
+// ===============================
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -158,6 +196,9 @@ const deleteCategory = async (req, res) => {
   }
 };
 
+// ===============================
+// Export controllers
+// ===============================
 module.exports = {
   getCategories,
   getCategoryBySlug,

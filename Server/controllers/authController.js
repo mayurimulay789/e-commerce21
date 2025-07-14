@@ -1,4 +1,4 @@
-const admin = require('firebase-admin')
+const admin = require("firebase-admin")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcryptjs")
 const User = require("../models/User")
@@ -11,14 +11,11 @@ const rateLimitStore = new Map()
 const checkRateLimit = (identifier, maxAttempts = 5, windowMs = 15 * 60 * 1000) => {
   const now = Date.now()
   const key = `${identifier}_${Math.floor(now / windowMs)}`
-
   const attempts = rateLimitStore.get(key) || 0
   if (attempts >= maxAttempts) {
     throw new Error(`Too many attempts. Please try again later.`)
   }
-
   rateLimitStore.set(key, attempts + 1)
-
   // Clean up old entries
   for (const [k, v] of rateLimitStore.entries()) {
     if (k.split("_")[1] < Math.floor((now - windowMs) / windowMs)) {
@@ -27,7 +24,225 @@ const checkRateLimit = (identifier, maxAttempts = 5, windowMs = 15 * 60 * 1000) 
   }
 }
 
-// Email Registration
+// Phone Authentication - Send OTP (Firebase handles OTP generation and sending)
+const sendPhoneOTP = async (req, res) => {
+  try {
+    const { phoneNumber } = req.body
+
+    // Validation
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number is required",
+      })
+    }
+
+    // Phone number validation
+    const phoneRegex = /^\+[1-9]\d{1,14}$/
+    if (!phoneRegex.test(phoneNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid phone number format. Please include country code (e.g., +1)",
+      })
+    }
+
+    // Check rate limit
+    checkRateLimit(`phone_otp_${phoneNumber}`, 3, 15 * 60 * 1000) // 3 attempts per 15 minutes
+
+    try {
+      // Check if user already exists in Firebase
+      let firebaseUser
+      try {
+        firebaseUser = await admin.auth().getUserByPhoneNumber(phoneNumber)
+      } catch (firebaseError) {
+        if (firebaseError.code !== "auth/user-not-found") {
+          throw firebaseError
+        }
+        // User doesn't exist in Firebase, which is fine for new registrations
+      }
+
+      // Check if user exists in our database
+      let user = await User.findOne({ phoneNumber })
+      
+      if (!user && firebaseUser) {
+        // User exists in Firebase but not in our database - create database record
+        user = new User({
+          firebaseUid: firebaseUser.uid,
+          phoneNumber,
+          authMethod: "phone",
+          role: "user", // Only users can register via phone
+          isVerified: false,
+          name: firebaseUser.displayName || `User ${phoneNumber.slice(-4)}`,
+        })
+        await user.save()
+      } else if (!user) {
+        // Create temporary user record for new registrations
+        user = new User({
+          phoneNumber,
+          authMethod: "phone",
+          role: "user", // Only users can register via phone
+          isVerified: false,
+          name: `User ${phoneNumber.slice(-4)}`, // Temporary name
+        })
+        await user.save()
+      }
+
+      // Firebase will handle OTP generation and sending via the client SDK
+      // We just need to confirm the phone number is valid and ready for verification
+      res.status(200).json({
+        success: true,
+        message: "Ready to send OTP. Please use Firebase client SDK to send verification code.",
+        phoneNumber,
+        userId: user._id,
+      })
+    } catch (error) {
+      console.error("Send OTP preparation error:", error)
+      return res.status(500).json({
+        success: false,
+        message: "Failed to prepare OTP sending. Please try again.",
+      })
+    }
+  } catch (error) {
+    console.error("Phone OTP error:", error)
+    if (error.message.includes("Too many attempts")) {
+      return res.status(429).json({
+        success: false,
+        message: error.message,
+      })
+    }
+    res.status(500).json({
+      success: false,
+      message: "Failed to send OTP. Please try again.",
+    })
+  }
+}
+
+// Verify Phone OTP and complete registration/login
+const verifyPhoneOTP = async (req, res) => {
+  try {
+    const { phoneNumber, name, firebaseIdToken } = req.body
+
+    // Validation
+    if (!phoneNumber || !firebaseIdToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number and Firebase ID token are required",
+      })
+    }
+
+    // Check rate limit for OTP verification
+    checkRateLimit(`verify_otp_${phoneNumber}`, 5, 15 * 60 * 1000) // 5 attempts per 15 minutes
+
+    try {
+      // Verify Firebase ID token
+      const decodedToken = await admin.auth().verifyIdToken(firebaseIdToken)
+      
+      // Ensure the token is for the correct phone number
+      if (decodedToken.phone_number !== phoneNumber) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number mismatch",
+        })
+      }
+
+      // Get Firebase user details
+      const firebaseUser = await admin.auth().getUser(decodedToken.uid)
+
+      // Find or create user in database
+      let user = await User.findOne({ phoneNumber })
+      
+      if (!user) {
+        // Create new user
+        user = new User({
+          firebaseUid: firebaseUser.uid,
+          phoneNumber,
+          authMethod: "phone",
+          role: "user",
+          isVerified: true, // Phone is verified through Firebase
+          name: name?.trim() || firebaseUser.displayName || `User ${phoneNumber.slice(-4)}`,
+        })
+      } else {
+        // Update existing user
+        user.firebaseUid = firebaseUser.uid
+        user.isVerified = true
+        user.lastLogin = new Date()
+        if (name && name.trim()) {
+          user.name = name.trim()
+        }
+      }
+
+      await user.save()
+
+      // Generate JWT token
+      const jwtToken = jwt.sign(
+        {
+          userId: user._id,
+          firebaseUid: user.firebaseUid,
+          phoneNumber: user.phoneNumber,
+          role: user.role,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" },
+      )
+
+      // Create custom token for Firebase
+      const customToken = await admin.auth().createCustomToken(firebaseUser.uid)
+
+      const isNewUser = !user.lastLogin || user.createdAt.getTime() === user.lastLogin.getTime()
+
+      res.status(200).json({
+        success: true,
+        message: isNewUser ? "Registration successful!" : "Login successful!",
+        user: {
+          _id: user._id,
+          firebaseUid: user.firebaseUid,
+          name: user.name,
+          phoneNumber: user.phoneNumber,
+          authMethod: user.authMethod,
+          role: user.role,
+          isVerified: user.isVerified,
+          avatar: user.avatar,
+          createdAt: user.createdAt,
+          lastLogin: user.lastLogin,
+        },
+        customToken,
+        jwtToken,
+      })
+    } catch (firebaseError) {
+      console.error("Firebase phone verification error:", firebaseError)
+      if (firebaseError.code === "auth/id-token-expired") {
+        return res.status(401).json({
+          success: false,
+          message: "Verification expired. Please try again.",
+        })
+      }
+      if (firebaseError.code === "auth/invalid-id-token") {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid verification code.",
+        })
+      }
+      return res.status(500).json({
+        success: false,
+        message: "Phone verification failed. Please try again.",
+      })
+    }
+  } catch (error) {
+    console.error("Verify OTP error:", error)
+    if (error.message.includes("Too many attempts")) {
+      return res.status(429).json({
+        success: false,
+        message: error.message,
+      })
+    }
+    res.status(500).json({
+      success: false,
+      message: "OTP verification failed. Please try again.",
+    })
+  }
+}
+
+// Email Registration (existing function - keeping as is)
 const registerWithEmail = async (req, res) => {
   try {
     const { email, password, name } = req.body
@@ -39,7 +254,8 @@ const registerWithEmail = async (req, res) => {
         message: "Email, password, and name are required",
       })
     }
-console.log("Incoming body:", req.body)
+
+    console.log("Incoming body:", req.body)
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -130,14 +346,12 @@ console.log("Incoming body:", req.body)
       })
     } catch (firebaseError) {
       console.error("Firebase registration error:", firebaseError)
-
       if (firebaseError.code === "auth/email-already-exists") {
         return res.status(400).json({
           success: false,
           message: "An account with this email already exists",
         })
       }
-
       return res.status(500).json({
         success: false,
         message: "Registration failed. Please try again.",
@@ -145,14 +359,12 @@ console.log("Incoming body:", req.body)
     }
   } catch (error) {
     console.error("Email registration error:", error)
-
     if (error.message.includes("Too many attempts")) {
       return res.status(429).json({
         success: false,
         message: error.message,
       })
     }
-
     res.status(500).json({
       success: false,
       message: "Registration failed. Please try again.",
@@ -160,7 +372,7 @@ console.log("Incoming body:", req.body)
   }
 }
 
-// Login with Email
+// Login with Email (existing function - keeping as is)
 const loginWithEmail = async (req, res) => {
   try {
     const { email, password } = req.body
@@ -190,7 +402,6 @@ const loginWithEmail = async (req, res) => {
 
       // Find user in database
       const user = await User.findOne({ firebaseUid: firebaseUser.uid })
-
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -237,14 +448,12 @@ const loginWithEmail = async (req, res) => {
       })
     } catch (firebaseError) {
       console.error("Firebase login error:", firebaseError)
-
       if (firebaseError.code === "auth/user-not-found") {
         return res.status(404).json({
           success: false,
           message: "No account found with this email address",
         })
       }
-
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
@@ -252,14 +461,12 @@ const loginWithEmail = async (req, res) => {
     }
   } catch (error) {
     console.error("Login error:", error)
-
     if (error.message.includes("Too many attempts")) {
       return res.status(429).json({
         success: false,
         message: error.message,
       })
     }
-
     res.status(500).json({
       success: false,
       message: "Login failed. Please try again.",
@@ -267,7 +474,7 @@ const loginWithEmail = async (req, res) => {
   }
 }
 
-// Verify Firebase ID Token (for both email and phone auth)
+// Verify Firebase ID Token (existing function - keeping as is)
 const verifyFirebaseToken = async (req, res) => {
   try {
     const { idToken } = req.body
@@ -362,14 +569,12 @@ const verifyFirebaseToken = async (req, res) => {
     })
   } catch (error) {
     console.error("Token verification error:", error)
-
     if (error.code === "auth/id-token-expired") {
       return res.status(401).json({
         success: false,
         message: "Token has expired",
       })
     }
-
     res.status(401).json({
       success: false,
       message: "Invalid token",
@@ -377,7 +582,7 @@ const verifyFirebaseToken = async (req, res) => {
   }
 }
 
-// Forgot Password (Email only)
+// Forgot Password (existing function - keeping as is)
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body
@@ -424,14 +629,12 @@ const forgotPassword = async (req, res) => {
       })
     } catch (firebaseError) {
       console.error("Firebase forgot password error:", firebaseError)
-
       if (firebaseError.code === "auth/user-not-found") {
         return res.status(404).json({
           success: false,
           message: "No account found with this email address",
         })
       }
-
       return res.status(500).json({
         success: false,
         message: "Failed to send password reset email",
@@ -439,14 +642,12 @@ const forgotPassword = async (req, res) => {
     }
   } catch (error) {
     console.error("Forgot password error:", error)
-
     if (error.message.includes("Too many attempts")) {
       return res.status(429).json({
         success: false,
         message: error.message,
       })
     }
-
     res.status(500).json({
       success: false,
       message: "Failed to send password reset email",
@@ -454,11 +655,10 @@ const forgotPassword = async (req, res) => {
   }
 }
 
-// Get user profile
+// Get user profile (existing function - keeping as is)
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId)
-
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -494,7 +694,7 @@ const getProfile = async (req, res) => {
   }
 }
 
-// Update user profile
+// Update user profile (existing function - keeping as is)
 const updateProfile = async (req, res) => {
   try {
     const { name, dateOfBirth, gender, addresses } = req.body
@@ -556,7 +756,7 @@ const updateProfile = async (req, res) => {
   }
 }
 
-// Upload avatar
+// Upload avatar (existing function - keeping as is)
 const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) {
@@ -568,7 +768,6 @@ const uploadAvatar = async (req, res) => {
 
     const userId = req.user.userId
     const user = await User.findById(userId)
-
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -618,7 +817,7 @@ const uploadAvatar = async (req, res) => {
   }
 }
 
-// Logout
+// Logout (existing function - keeping as is)
 const logout = async (req, res) => {
   try {
     const firebaseUid = req.user.firebaseUid
@@ -639,7 +838,7 @@ const logout = async (req, res) => {
   }
 }
 
-// Delete account
+// Delete account (existing function - keeping as is)
 const deleteAccount = async (req, res) => {
   try {
     const userId = req.user.userId
@@ -674,4 +873,7 @@ module.exports = {
   uploadAvatar,
   logout,
   deleteAccount,
+  // Phone OTP functions using Firebase
+  sendPhoneOTP,
+  verifyPhoneOTP,
 }

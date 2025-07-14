@@ -11,6 +11,7 @@ import couponReducer from "./slices/couponSlice"
 import returnReducer from "./slices/returnSlice"
 import adminReducer from "./slices/adminSlice"
 import digitalMarketerReducer from "./slices/digitalMarketerSlice"
+import searchSlice from "./slices/searchSlice"
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,8 @@ export const store = configureStore({
     returns: returnReducer,
     admin: adminReducer,
     digitalMarketer: digitalMarketerReducer,
+        search: searchSlice,
+
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

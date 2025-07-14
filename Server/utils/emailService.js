@@ -1,10 +1,10 @@
 const nodemailer = require("nodemailer")
 
 // Create transporter
-const createTransporter = () => {
+const createTransport = () => {
   if (process.env.NODE_ENV === "production") {
     // Production email service (e.g., SendGrid, AWS SES)
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
@@ -13,7 +13,7 @@ const createTransporter = () => {
     })
   } else {
     // Development - use Ethereal Email for testing
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: "smtp.ethereal.email",
       port: 587,
       auth: {
@@ -98,7 +98,7 @@ const templates = {
 // Send email function
 const sendEmail = async ({ to, subject, template, data, html, text }) => {
   try {
-    const transporter = createTransporter()
+    const transporter = createTransport()
 
     let emailContent = {}
 

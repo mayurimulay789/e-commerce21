@@ -1,345 +1,304 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import { useSearchParams, useNavigate } from "react-router-dom"
-import { useSelector, useDispatch } from "react-redux"
-import { motion, AnimatePresence } from "framer-motion"
-import { Search, TrendingUp, Clock, X } from "lucide-react"
-import { searchProducts, getSearchSuggestions, getTrendingSearches } from "../store/slices/searchSlice"
-import { addToWishlist, removeFromWishlist } from "../store/slices/wishlistSlice"
-import { addToCart } from "../store/slices/cartSlice"
-import Navbar from "../components/Navbar"
-import Footer from "../components/Footer"
+import { searchProducts, setFilters, addRecentSearch } from "../store/slices/searchSlice"
 import ProductCard from "../components/ProductCard"
+import ProductFilters from "../components/ProductFilter"
 import LoadingSpinner from "../components/LoadingSpinner"
-import toast from "react-hot-toast"
 
 const SearchResultsPage = () => {
-  const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
   const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const query = searchParams.get("q") || ""
-  const [searchInput, setSearchInput] = useState(query)
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [recentSearches, setRecentSearches] = useState([])
-
-  const { results, suggestions, trendingSearches, isLoading, totalResults, searchTime } = useSelector(
+  const { query, results, filters, totalProducts, totalPages, currentPage, loading, error } = useSelector(
     (state) => state.search,
   )
-  const { items: wishlistItems } = useSelector((state) => state.wishlist)
-  const { user } = useSelector((state) => state.auth)
+
+  const [showFilters, setShowFilters] = useState(false)
+  const [sortBy, setSortBy] = useState("relevance")
 
   useEffect(() => {
-    if (query) {
-      dispatch(searchProducts({ query, page: 1, limit: 20 }))
-      // Add to recent searches
-      const recent = JSON.parse(localStorage.getItem("recentSearches") || "[]")
-      const updated = [query, ...recent.filter((item) => item !== query)].slice(0, 5)
-      localStorage.setItem("recentSearches", JSON.stringify(updated))
-      setRecentSearches(updated)
-    }
-  }, [dispatch, query])
+    const searchQuery = searchParams.get("q") || ""
+    const category = searchParams.get("category") || ""
+    const minPrice = searchParams.get("minPrice") || ""
+    const maxPrice = searchParams.get("maxPrice") || ""
+    const page = Number.parseInt(searchParams.get("page")) || 1
+    const sort = searchParams.get("sort") || "relevance"
 
-  useEffect(() => {
-    dispatch(getTrendingSearches())
-    const recent = JSON.parse(localStorage.getItem("recentSearches") || "[]")
-    setRecentSearches(recent)
-  }, [dispatch])
+    if (searchQuery) {
+      const searchFilters = {
+        category,
+        minPrice,
+        maxPrice,
+        page,
+        sortBy: sort === "relevance" ? "createdAt" : sort,
+        sortOrder: sort === "price-low" ? "asc" : "desc",
+      }
 
-  useEffect(() => {
-    if (searchInput.length > 2) {
-      const debounceTimer = setTimeout(() => {
-        dispatch(getSearchSuggestions(searchInput))
-      }, 300)
-      return () => clearTimeout(debounceTimer)
+      dispatch(setFilters(searchFilters))
+      dispatch(searchProducts({ query: searchQuery, filters: searchFilters }))
+      dispatch(addRecentSearch(searchQuery))
+      setSortBy(sort)
     }
-  }, [dispatch, searchInput])
+  }, [searchParams, dispatch])
 
-  const handleSearch = (searchQuery) => {
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      setShowSuggestions(false)
-    }
+  const handleFilterChange = (newFilters) => {
+    const updatedFilters = { ...filters, ...newFilters, page: 1 }
+    dispatch(setFilters(updatedFilters))
+
+    // Update URL params
+    const params = new URLSearchParams(searchParams)
+    Object.entries(updatedFilters).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value)
+      } else {
+        params.delete(key)
+      }
+    })
+    setSearchParams(params)
+
+    dispatch(searchProducts({ query: searchParams.get("q"), filters: updatedFilters }))
   }
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearch(searchInput)
+  const handleSortChange = (newSort) => {
+    setSortBy(newSort)
+    const sortFilters = {
+      sortBy:
+        newSort === "relevance" ? "createdAt" : newSort === "price-low" || newSort === "price-high" ? "price" : newSort,
+      sortOrder: newSort === "price-low" ? "asc" : "desc",
     }
+
+    const params = new URLSearchParams(searchParams)
+    params.set("sort", newSort)
+    setSearchParams(params)
+
+    handleFilterChange(sortFilters)
   }
 
-  const clearRecentSearch = (searchTerm) => {
-    const updated = recentSearches.filter((item) => item !== searchTerm)
-    localStorage.setItem("recentSearches", JSON.stringify(updated))
-    setRecentSearches(updated)
+  const handlePageChange = (page) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("page", page)
+    setSearchParams(params)
+
+    handleFilterChange({ page })
   }
 
-  const handleWishlistToggle = (product) => {
-    if (!user) {
-      toast.error("Please login to add items to wishlist")
-      return
-    }
-
-    const isInWishlist = wishlistItems.some((item) => item._id === product._id)
-
-    if (isInWishlist) {
-      dispatch(removeFromWishlist(product._id))
-      toast.success("Removed from wishlist")
-    } else {
-      dispatch(addToWishlist(product))
-      toast.success("Added to wishlist!")
-    }
-  }
-
-  const handleAddToCart = (product) => {
-    if (!user) {
-      toast.error("Please login to add items to cart")
-      return
-    }
+  const clearAllFilters = () => {
+    const params = new URLSearchParams()
+    params.set("q", searchParams.get("q"))
+    setSearchParams(params)
 
     dispatch(
-      addToCart({
-        productId: product._id,
-        quantity: 1,
-        price: product.price,
-        name: product.name,
-        image: product.images[0]?.url,
+      setFilters({
+        category: "",
+        minPrice: "",
+        maxPrice: "",
+        sortBy: "createdAt",
+        sortOrder: "desc",
+        page: 1,
       }),
     )
-    toast.success("Added to cart!")
+
+    dispatch(
+      searchProducts({
+        query: searchParams.get("q"),
+        filters: { page: 1 },
+      }),
+    )
+  }
+
+  if (loading && results.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner />
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
-      <div className="container px-4 py-8 mx-auto">
-        {/* Search Header */}
-        <div className="max-w-2xl mx-auto mb-8">
-          <div className="relative">
-            <div className="relative">
-              <Search className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-4 top-1/2" />
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                onFocus={() => setShowSuggestions(true)}
-                placeholder="Search for products, brands, categories..."
-                className="w-full py-4 pl-12 pr-4 text-lg transition-colors border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none"
-              />
-              <button
-                onClick={() => handleSearch(searchInput)}
-                className="absolute px-6 py-2 text-white transition-colors transform -translate-y-1/2 bg-orange-500 rounded-lg right-2 top-1/2 hover:bg-orange-600"
-              >
-                Search
-              </button>
+      {/* Header */}
+      <div className="bg-white border-b shadow-sm">
+        <div className="px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Search Results</h1>
+              {query && (
+                <p className="mt-1 text-gray-600">
+                  {totalProducts} results for "{query}"
+                </p>
+              )}
             </div>
 
-            {/* Search Suggestions */}
-            <AnimatePresence>
-              {showSuggestions &&
-                (searchInput.length > 0 || recentSearches.length > 0 || trendingSearches.length > 0) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute left-0 right-0 z-50 mt-2 overflow-y-auto bg-white border border-gray-200 shadow-lg top-full rounded-xl max-h-96"
-                  >
-                    {/* Search Suggestions */}
-                    {suggestions.length > 0 && (
-                      <div className="p-4 border-b">
-                        <h4 className="mb-2 text-sm font-medium text-gray-500">Suggestions</h4>
-                        {suggestions.map((suggestion, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleSearch(suggestion)}
-                            className="block w-full px-3 py-2 text-left transition-colors rounded-lg hover:bg-gray-50"
-                          >
-                            <div className="flex items-center">
-                              <Search className="w-4 h-4 mr-3 text-gray-400" />
-                              <span>{suggestion}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Recent Searches */}
-                    {recentSearches.length > 0 && (
-                      <div className="p-4 border-b">
-                        <h4 className="flex items-center mb-2 text-sm font-medium text-gray-500">
-                          <Clock className="w-4 h-4 mr-1" />
-                          Recent Searches
-                        </h4>
-                        {recentSearches.map((search, index) => (
-                          <div key={index} className="flex items-center justify-between group">
-                            <button
-                              onClick={() => handleSearch(search)}
-                              className="flex-1 px-3 py-2 text-left transition-colors rounded-lg hover:bg-gray-50"
-                            >
-                              {search}
-                            </button>
-                            <button
-                              onClick={() => clearRecentSearch(search)}
-                              className="p-1 transition-all rounded opacity-0 group-hover:opacity-100 hover:bg-gray-100"
-                            >
-                              <X className="w-4 h-4 text-gray-400" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Trending Searches */}
-                    {trendingSearches.length > 0 && (
-                      <div className="p-4">
-                        <h4 className="flex items-center mb-2 text-sm font-medium text-gray-500">
-                          <TrendingUp className="w-4 h-4 mr-1" />
-                          Trending
-                        </h4>
-                        {trendingSearches.map((trend, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleSearch(trend)}
-                            className="block w-full px-3 py-2 text-left transition-colors rounded-lg hover:bg-gray-50"
-                          >
-                            <div className="flex items-center">
-                              <span className="mr-2 font-medium text-orange-500">#{index + 1}</span>
-                              <span>{trend}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Mobile Filter Toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center px-4 py-2 space-x-2 bg-gray-100 rounded-lg lg:hidden"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                />
+              </svg>
+              <span>Filters</span>
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Search Results */}
-        {query && (
-          <>
-            {/* Results Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">Search Results for "{query}"</h1>
-                {!isLoading && (
-                  <p className="mt-1 text-gray-600">
-                    {totalResults} results found {searchTime && `in ${searchTime}ms`}
-                  </p>
-                )}
+      <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-8 lg:flex-row">
+          {/* Filters Sidebar */}
+          <div className={`lg:w-64 ${showFilters ? "block" : "hidden lg:block"}`}>
+            <div className="p-6 bg-white rounded-lg shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Filters</h3>
+                <button onClick={clearAllFilters} className="text-sm text-blue-600 hover:text-blue-800">
+                  Clear All
+                </button>
+              </div>
+
+              <ProductFilters filters={filters} onFilterChange={handleFilterChange} />
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Sort and View Options */}
+            <div className="p-4 mb-6 bg-white rounded-lg shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-600">Sort by:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => handleSortChange(e.target.value)}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="relevance">Relevance</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="newest">Newest First</option>
+                    <option value="rating">Customer Rating</option>
+                  </select>
+                </div>
+
+                <div className="text-sm text-gray-600">
+                  Showing {(currentPage - 1) * filters.limit + 1}-{Math.min(currentPage * filters.limit, totalProducts)}{" "}
+                  of {totalProducts} results
+                </div>
               </div>
             </div>
 
-            {/* Loading State */}
-            {isLoading && (
-              <div className="flex justify-center py-12">
-                <LoadingSpinner message="Searching products..." />
+            {/* Error State */}
+            {error && (
+              <div className="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-red-800">{error}</span>
+                </div>
               </div>
             )}
 
             {/* No Results */}
-            {!isLoading && results.length === 0 && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-16 text-center">
-                <div className="flex items-center justify-center w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full">
-                  <Search className="w-12 h-12 text-gray-400" />
-                </div>
-                <h2 className="mb-4 text-2xl font-semibold text-gray-800">No results found for "{query}"</h2>
-                <p className="max-w-md mx-auto mb-8 text-gray-600">
-                  Try different keywords or check out our trending searches below
-                </p>
+            {!loading && results.length === 0 && !error && (
+              <div className="p-12 text-center bg-white rounded-lg shadow-sm">
+                <svg
+                  className="w-16 h-16 mx-auto mb-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">No products found</h3>
+                <p className="mb-4 text-gray-600">We couldn't find any products matching your search criteria.</p>
+                <button
+                  onClick={clearAllFilters}
+                  className="px-6 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
 
-                {/* Trending Suggestions */}
-                {trendingSearches.length > 0 && (
-                  <div className="max-w-md mx-auto">
-                    <h3 className="mb-4 text-lg font-medium">Try these popular searches:</h3>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      {trendingSearches.slice(0, 6).map((trend, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleSearch(trend)}
-                          className="px-4 py-2 text-orange-600 transition-colors bg-orange-100 rounded-full hover:bg-orange-200"
-                        >
-                          {trend}
-                        </button>
-                      ))}
-                    </div>
+            {/* Products Grid */}
+            {results.length > 0 && (
+              <>
+                <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {results.map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center">
+                    <nav className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+
+                      {[...Array(totalPages)].map((_, index) => {
+                        const page = index + 1
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`px-3 py-2 rounded-md text-sm font-medium ${
+                              currentPage === page
+                                ? "bg-blue-600 text-white"
+                                : "bg-white border border-gray-300 text-gray-500 hover:bg-gray-50"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        )
+                      })}
+
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </nav>
                   </div>
                 )}
-              </motion.div>
+              </>
             )}
 
-            {/* Results Grid */}
-            {!isLoading && results.length > 0 && (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                <AnimatePresence>
-                  {results.map((product, index) => (
-                    <motion.div
-                      key={product._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <ProductCard
-                        product={product}
-                        isInWishlist={wishlistItems.some((item) => item._id === product._id)}
-                        onWishlistToggle={() => handleWishlistToggle(product)}
-                        onAddToCart={() => handleAddToCart(product)}
-                        onQuickView={() => navigate(`/product/${product._id}`)}
-                      />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+            {/* Loading State */}
+            {loading && results.length > 0 && (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
               </div>
             )}
-          </>
-        )}
-
-        {/* Default State - No Search Query */}
-        {!query && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-16 text-center">
-            <div className="flex items-center justify-center w-24 h-24 mx-auto mb-6 bg-orange-100 rounded-full">
-              <Search className="w-12 h-12 text-orange-500" />
-            </div>
-            <h2 className="mb-4 text-2xl font-semibold text-gray-800">Discover Amazing Products</h2>
-            <p className="max-w-md mx-auto mb-8 text-gray-600">
-              Search through thousands of products to find exactly what you're looking for
-            </p>
-
-            {/* Trending Searches */}
-            {trendingSearches.length > 0 && (
-              <div className="max-w-2xl mx-auto">
-                <h3 className="flex items-center justify-center mb-6 text-lg font-medium">
-                  <TrendingUp className="w-5 h-5 mr-2 text-orange-500" />
-                  Trending Searches
-                </h3>
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                  {trendingSearches.map((trend, index) => (
-                    <motion.button
-                      key={index}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleSearch(trend)}
-                      className="p-4 text-left transition-all bg-white border border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50"
-                    >
-                      <div className="flex items-center">
-                        <span className="mr-2 font-bold text-orange-500">#{index + 1}</span>
-                        <span className="font-medium">{trend}</span>
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
+          </div>
+        </div>
       </div>
-
-      <Footer />
     </div>
   )
 }

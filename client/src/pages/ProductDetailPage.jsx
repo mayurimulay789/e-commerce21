@@ -22,8 +22,7 @@ import {
 import { fetchProductById } from "../store/slices/productSlice"
 import { addToCart } from "../store/slices/cartSlice"
 import { addToWishlist, removeFromWishlist } from "../store/slices/wishlistSlice"
-import Navbar from "../components/Navbar"
-import Footer from "../components/Footer"
+
 import ProductReviews from "../components/ProductReviews"
 import RelatedProducts from "../components/RelatedProducts"
 import LoadingSpinner from "../components/LoadingSpinner"
@@ -169,9 +168,7 @@ const ProductDetailPage = () => {
   if (isLoading) {
     return (
       <div>
-        <Navbar />
         <LoadingSpinner message="Loading product..." />
-        <Footer />
       </div>
     )
   }
@@ -179,7 +176,6 @@ const ProductDetailPage = () => {
   if (error || !currentProduct) {
     return (
       <div>
-        <Navbar />
         <div className="container px-4 py-16 mx-auto text-center">
           <AlertCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
           <h1 className="mb-2 text-2xl font-bold text-gray-800">Product Not Found</h1>
@@ -191,14 +187,12 @@ const ProductDetailPage = () => {
             Browse Products
           </Link>
         </div>
-        <Footer />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
 
       <div className="container px-4 py-8 mx-auto">
         {/* Breadcrumb */}
@@ -473,8 +467,8 @@ const ProductDetailPage = () => {
 
         {/* Product Details Tabs */}
         <div className="mt-16">
-          <ProductReviews product={currentProduct} />
-        </div>
+  <ProductReviews productId={currentProduct._id} />
+</div>
 
         {/* Related Products */}
         <div className="mt-16">
@@ -533,7 +527,6 @@ const ProductDetailPage = () => {
         )}
       </AnimatePresence>
 
-      <Footer />
     </div>
   )
 }

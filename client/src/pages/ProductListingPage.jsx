@@ -9,8 +9,7 @@ import { fetchProducts, setFilters, clearFilters } from "../store/slices/product
 import { fetchCategories } from "../store/slices/categorySlice"
 import { addToWishlist, removeFromWishlist } from "../store/slices/wishlistSlice"
 import { addToCart } from "../store/slices/cartSlice"
-import Navbar from "../components/Navbar"
-import Footer from "../components/Footer"
+
 import LoadingSpinner from "../components/LoadingSpinner"
 import ProductCard from "../components/ProductCard"
 import toast from "react-hot-toast"
@@ -148,16 +147,13 @@ const ProductListingPage = () => {
   if (isLoading && products.length === 0) {
     return (
       <div>
-        <Navbar />
         <LoadingSpinner message="Loading products..." />
-        <Footer />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
 
       <div className="container px-4 py-8 mx-auto">
         {/* Header */}
@@ -390,33 +386,33 @@ const ProductListingPage = () => {
             )}
 
             {/* Pagination */}
-            {pagination.totalPages > 1 && (
-              <div className="flex justify-center mt-12">
-                <div className="flex items-center space-x-2">
-                  {[...Array(pagination.totalPages)].map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        const params = { ...localFilters, page: index + 1 }
-                        dispatch(fetchProducts(params))
-                      }}
-                      className={`px-4 py-2 rounded-lg transition-colors ${
-                        pagination.currentPage === index + 1
-                          ? "bg-orange-500 text-white"
-                          : "bg-white text-gray-600 hover:bg-gray-50 border"
-                      }`}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {pagination && pagination.totalPages > 1 && (
+  <div className="flex justify-center mt-12">
+    <div className="flex items-center space-x-2">
+      {[...Array(pagination.totalPages)].map((_, index) => (
+        <button
+          key={index}
+          onClick={() => {
+            const params = { ...localFilters, page: index + 1 };
+            dispatch(fetchProducts(params));
+          }}
+          className={`px-4 py-2 rounded-lg transition-colors ${
+            pagination.currentPage === index + 1
+              ? "bg-orange-500 text-white"
+              : "bg-white text-gray-600 hover:bg-gray-50 border"
+          }`}
+        >
+          {index + 1}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
+
           </div>
         </div>
       </div>
 
-      <Footer />
     </div>
   )
 }

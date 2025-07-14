@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate, useLocation, Link } from "react-router-dom"
@@ -16,22 +15,20 @@ import {
   clearPhoneAuthState,
 } from "../store/slices/authSlice"
 import toast from "react-hot-toast"
+import { cleanupRecaptcha } from "../config/firebase.js" // Make sure this is imported
 
 const LoginPage = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
-
-  const { isLoading, error, success, isAuthenticated, phoneNumber, confirmationResult, phoneAuthLoading } = useSelector(
+  const { isLoading, error, message, isAuthenticated, phoneNumber, confirmationResult, otpSent } = useSelector(
     (state) => state.auth,
   )
-
   // UI State
   const [activeTab, setActiveTab] = useState("email") // 'email' or 'phone'
   const [mode, setMode] = useState("login") // 'login' or 'register'
   const [showPassword, setShowPassword] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
-
   // Email Form State
   const [emailForm, setEmailForm] = useState({
     email: "",
@@ -39,16 +36,13 @@ const LoginPage = () => {
     name: "",
     confirmPassword: "",
   })
-
   // Phone Form State
   const [phoneForm, setPhoneForm] = useState({
     phoneNumber: "",
     otp: "",
   })
-
   // OTP Timer
   const [otpTimer, setOtpTimer] = useState(0)
-
   // Forgot Password State
   const [forgotEmail, setForgotEmail] = useState("")
 
@@ -58,19 +52,23 @@ const LoginPage = () => {
       const from = location.state?.from?.pathname || "/"
       navigate(from, { replace: true })
     }
+    // Cleanup reCAPTCHA when component unmounts
+    return () => {
+      cleanupRecaptcha()
+    }
   }, [isAuthenticated, navigate, location])
 
   // Handle success/error messages
   useEffect(() => {
-    if (success) {
-      toast.success(success)
+    if (message) {
+      toast.success(message)
       dispatch(clearSuccess())
     }
     if (error) {
       toast.error(error)
       dispatch(clearError())
     }
-  }, [success, error, dispatch])
+  }, [message, error, dispatch])
 
   // OTP Timer Effect
   useEffect(() => {
@@ -88,7 +86,6 @@ const LoginPage = () => {
   // Handle Email Form Submit
   const handleEmailSubmit = async (e) => {
     e.preventDefault()
-
     if (mode === "register") {
       // Validation
       if (!emailForm.name.trim()) {
@@ -103,7 +100,6 @@ const LoginPage = () => {
         toast.error("Password must be at least 6 characters long")
         return
       }
-
       dispatch(
         registerWithEmail({
           email: emailForm.email,
@@ -124,20 +120,22 @@ const LoginPage = () => {
   // Handle Phone Form Submit
   const handlePhoneSubmit = async (e) => {
     e.preventDefault()
-
     if (!confirmationResult) {
       // Send OTP
       if (!phoneForm.phoneNumber.trim()) {
         toast.error("Phone number is required")
         return
       }
-
       // Basic phone validation
-      if (!phoneForm.phoneNumber.startsWith("+")) {
-        toast.error("Please include country code (e.g., +1)")
+      // if (!phoneForm.phoneNumber.startsWith("+")) {
+      //   toast.error("Please include country code (e.g., +1)");
+      //   return;
+      // }
+      const phoneRegex = /^\+[1-9]\d{1,14}$/
+      if (!phoneRegex.test(phoneForm.phoneNumber)) {
+        toast.error("Please enter a valid phone number including country code (e.g., +1234567890)")
         return
       }
-
       dispatch(sendPhoneOTP(phoneForm.phoneNumber))
       setOtpTimer(60) // 60 seconds timer
     } else {
@@ -146,16 +144,16 @@ const LoginPage = () => {
         toast.error("OTP is required")
         return
       }
-
       if (phoneForm.otp.length !== 6) {
         toast.error("Please enter a valid 6-digit OTP")
         return
       }
-
       dispatch(
         verifyPhoneOTP({
           confirmationResult,
           otp: phoneForm.otp,
+          phoneNumber: phoneForm.phoneNumber, // Pass phoneNumber for backend verification
+          name: emailForm.name, // Pass name if registering via phone
         }),
       )
     }
@@ -164,12 +162,10 @@ const LoginPage = () => {
   // Handle Forgot Password
   const handleForgotPassword = async (e) => {
     e.preventDefault()
-
     if (!forgotEmail.trim()) {
       toast.error("Email is required")
       return
     }
-
     dispatch(forgotPassword(forgotEmail))
     setShowForgotPassword(false)
     setForgotEmail("")
@@ -178,7 +174,6 @@ const LoginPage = () => {
   // Resend OTP
   const handleResendOTP = () => {
     if (otpTimer > 0) return
-
     dispatch(sendPhoneOTP(phoneForm.phoneNumber))
     setOtpTimer(60)
   }
@@ -190,8 +185,8 @@ const LoginPage = () => {
     setEmailForm({ email: "", password: "", name: "", confirmPassword: "" })
     setPhoneForm({ phoneNumber: "", otp: "" })
     setOtpTimer(0)
+    cleanupRecaptcha() // Clear reCAPTCHA when switching tabs
   }
-
   const handleModeChange = (newMode) => {
     setMode(newMode)
     dispatch(clearPhoneAuthState())
@@ -215,7 +210,6 @@ const LoginPage = () => {
             {mode === "login" ? "Sign in to your account to continue" : "Join us and start your fashion journey"}
           </p>
         </div>
-
         {/* Main Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Mode Toggle */}
@@ -237,7 +231,6 @@ const LoginPage = () => {
               Sign Up
             </button>
           </div>
-
           {/* Auth Method Tabs */}
           <div className="flex bg-gray-50 rounded-lg p-1 mb-6">
             <button
@@ -259,7 +252,6 @@ const LoginPage = () => {
               Phone
             </button>
           </div>
-
           {/* Forms */}
           <AnimatePresence mode="wait">
             {activeTab === "email" && (
@@ -287,7 +279,6 @@ const LoginPage = () => {
                       </div>
                     </div>
                   )}
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                     <div className="relative">
@@ -302,7 +293,6 @@ const LoginPage = () => {
                       />
                     </div>
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
                     <div className="relative">
@@ -324,7 +314,6 @@ const LoginPage = () => {
                       </button>
                     </div>
                   </div>
-
                   {mode === "register" && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
@@ -341,7 +330,6 @@ const LoginPage = () => {
                       </div>
                     </div>
                   )}
-
                   {mode === "login" && (
                     <div className="flex justify-end">
                       <button
@@ -353,7 +341,6 @@ const LoginPage = () => {
                       </button>
                     </div>
                   )}
-
                   <button
                     type="submit"
                     disabled={isLoading}
@@ -371,7 +358,6 @@ const LoginPage = () => {
                 </form>
               </motion.div>
             )}
-
             {activeTab === "phone" && (
               <motion.div
                 key="phone-form"
@@ -410,7 +396,6 @@ const LoginPage = () => {
                           <span className="font-medium">{phoneForm.phoneNumber}</span>
                         </p>
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Verification Code</label>
                         <input
@@ -426,30 +411,24 @@ const LoginPage = () => {
                           required
                         />
                       </div>
-
                       <div className="flex justify-center">
                         <button
                           type="button"
                           onClick={handleResendOTP}
-                          disabled={otpTimer > 0 || phoneAuthLoading}
+                          disabled={otpTimer > 0 || isLoading}
                           className="text-sm text-pink-600 hover:text-pink-700 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
                         >
-                          {otpTimer > 0
-                            ? `Resend code in ${otpTimer}s`
-                            : phoneAuthLoading
-                              ? "Sending..."
-                              : "Resend code"}
+                          {otpTimer > 0 ? `Resend code in ${otpTimer}s` : isLoading ? "Sending..." : "Resend code"}
                         </button>
                       </div>
                     </>
                   )}
-
                   <button
                     type="submit"
-                    disabled={isLoading || phoneAuthLoading}
+                    disabled={isLoading}
                     className="w-full bg-pink-600 text-white py-3 px-4 rounded-lg hover:bg-pink-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-colors font-medium flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading || phoneAuthLoading ? (
+                    {isLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <>
@@ -458,7 +437,6 @@ const LoginPage = () => {
                       </>
                     )}
                   </button>
-
                   {confirmationResult && (
                     <button
                       type="button"
@@ -477,7 +455,6 @@ const LoginPage = () => {
             )}
           </AnimatePresence>
         </div>
-
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-sm text-gray-600">
@@ -491,7 +468,6 @@ const LoginPage = () => {
             </Link>
           </p>
         </div>
-
         {/* Forgot Password Modal */}
         <AnimatePresence>
           {showForgotPassword && (
@@ -518,7 +494,6 @@ const LoginPage = () => {
                     Enter your email address and we'll send you a link to reset your password.
                   </p>
                 </div>
-
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
@@ -534,7 +509,6 @@ const LoginPage = () => {
                       />
                     </div>
                   </div>
-
                   <div className="flex space-x-3">
                     <button
                       type="button"
@@ -556,7 +530,6 @@ const LoginPage = () => {
             </motion.div>
           )}
         </AnimatePresence>
-
         {/* reCAPTCHA container for phone auth */}
         <div id="recaptcha-container"></div>
       </div>

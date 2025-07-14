@@ -257,9 +257,6 @@ export const sendPhoneOTP = createAsyncThunk("auth/sendPhoneOTP", async (phoneNu
     // First, prepare the backend for OTP
     await axios.post(`${API_BASE_URL}/auth/phone/prepare-otp`, { phoneNumber })
 
-    // Ensure reCAPTCHA is clean before initializing
-    cleanupRecaptcha() // Add this line
-
     // Initialize reCAPTCHA
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
@@ -269,7 +266,7 @@ export const sendPhoneOTP = createAsyncThunk("auth/sendPhoneOTP", async (phoneNu
         },
         "expired-callback": () => {
           console.log("reCAPTCHA expired")
-          cleanupRecaptcha() // Add this line
+          window.recaptchaVerifier = null
         },
       })
     }
@@ -285,7 +282,10 @@ export const sendPhoneOTP = createAsyncThunk("auth/sendPhoneOTP", async (phoneNu
   } catch (error) {
     console.error("Send phone OTP error:", error)
     // Clean up reCAPTCHA on error
-    cleanupRecaptcha() // Ensure this is called on error
+    if (window.recaptchaVerifier) {
+      window.recaptchaVerifier.clear()
+      window.recaptchaVerifier = null
+    }
     switch (error.code) {
       case "auth/invalid-phone-number":
         return rejectWithValue("Invalid phone number format")
@@ -295,8 +295,6 @@ export const sendPhoneOTP = createAsyncThunk("auth/sendPhoneOTP", async (phoneNu
         return rejectWithValue("reCAPTCHA verification failed. Please try again.")
       case "auth/network-request-failed":
         return rejectWithValue("Network error. Please check your connection.")
-      case "auth/billing-not-enabled": // Add specific handling for billing error
-        return rejectWithValue("Phone authentication requires billing to be enabled on your Firebase project.")
       default:
         return rejectWithValue("Failed to send OTP. Please try again.")
     }
@@ -587,8 +585,7 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
-    clearSuccess: (state) => {
-      // Renamed from clearMessage
+    clearMessage: (state) => {
       state.message = null
     },
     setUser: (state, action) => {
@@ -614,8 +611,7 @@ const authSlice = createSlice({
       localStorage.removeItem("user")
       localStorage.removeItem("authToken")
     },
-    clearPhoneAuthState: (state) => {
-      // Renamed from resetOtpState
+    resetOtpState: (state) => {
       state.otpSent = false
       state.confirmationResult = null
       state.phoneNumber = null
@@ -924,8 +920,7 @@ const authSlice = createSlice({
 })
 
 // Export actions
-export const { clearError, clearSuccess, setUser, setToken, setFirebaseUser, logout, clearPhoneAuthState } =
-  authSlice.actions
+export const { clearError, clearMessage, setUser, setToken, setFirebaseUser, logout, resetOtpState } = authSlice.actions
 
 // Export reducer
 export default authSlice.reducer
