@@ -15,20 +15,12 @@ import LoadingSpinner from "../components/LoadingSpinner"
 import ProductCard from "../components/ProductCard"
 import toast from "react-hot-toast"
 
-
 const ProductListingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
-const [debouncedFilters] = useDebounce(localFilters, 500)
 
-  const { products, filters, pagination, isLoading } = useSelector((state) => state.products)
-  const { categories } = useSelector((state) => state.categories)
-  const { items: wishlistItems } = useSelector((state) => state.wishlist)
-  const { user } = useSelector((state) => state.auth)
-
-  const [viewMode, setViewMode] = useState("grid")
-  const [showFilters, setShowFilters] = useState(false)
+  // ✅ Declare localFilters FIRST
   const [localFilters, setLocalFilters] = useState({
     category: searchParams.get("category") || "",
     priceRange: [0, 10000],
@@ -39,6 +31,18 @@ const [debouncedFilters] = useDebounce(localFilters, 500)
     search: searchParams.get("search") || "",
   })
 
+  // ✅ Then useDebounce AFTER localFilters is initialized
+  const [debouncedFilters] = useDebounce(localFilters, 500)
+
+  const { products, filters, pagination, isLoading } = useSelector((state) => state.products)
+  const { categories } = useSelector((state) => state.categories)
+  const { items: wishlistItems } = useSelector((state) => state.wishlist)
+  const { user } = useSelector((state) => state.auth)
+
+
+  const [viewMode, setViewMode] = useState("grid")
+  const [showFilters, setShowFilters] = useState(false)
+  
   const sortOptions = [
     { value: "newest", label: "Newest First" },
     { value: "price-low", label: "Price: Low to High" },

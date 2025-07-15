@@ -678,6 +678,7 @@ const authSlice = createSlice({
         state.message = "Login successful!"
         state.error = null
       })
+      
       .addCase(loginWithEmail.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload

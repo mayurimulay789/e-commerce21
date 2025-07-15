@@ -18,7 +18,7 @@ import {
   Settings,
   Package,
 } from "lucide-react"
-import { logout } from "../store/slices/authSlice"
+import { logoutUser } from "../store/slices/authSlice"
 import { fetchCategories } from "../store/slices/categorySlice"
 
 const Navbar = () => {
@@ -58,7 +58,7 @@ const Navbar = () => {
   }
 
   const handleLogout = () => {
-    dispatch(logout())
+    dispatch(logoutUser())
     setShowUserMenu(false)
     navigate("/")
   }

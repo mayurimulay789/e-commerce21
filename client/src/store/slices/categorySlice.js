@@ -8,13 +8,23 @@ const api = axios.create({
 })
 
 // Add auth token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token")
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
+api.interceptors.request.use(
+  async (config) => {
+    const customJwt = localStorage.getItem("authToken") // Your backend JWT
+    if (customJwt) {
+      config.headers.Authorization = `Bearer ${customJwt}`
+    } else {
+      // Optionally fallback to Firebase ID token for auth-only routes:
+      const user = auth.currentUser
+      if (user) {
+        const idToken = await user.getIdToken(true)
+        config.headers.Authorization = `Bearer ${idToken}`
+      }
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
 
 // ============================
 // Async Thunks
