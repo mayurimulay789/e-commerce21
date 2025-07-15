@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect } from "react"
+import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
+
 import Navbar from "../components/Navbar"
 import HeroBanner from "../components/HeroBanner"
 import FeaturedCategories from "../components/FeaturedCategories"
@@ -10,29 +11,58 @@ import NewArrivals from "../components/NewArrivals"
 import PromoBanners from "../components/PromoBanners"
 import AboutBrand from "../components/AboutBrand"
 import Testimonials from "../components/Testimonials"
-// import InstagramFeed from "../components/InstagramFeed"
 import Footer from "../components/Footer"
-import LoadingSpinner from "../components/LoadingSpinner"
-import { fetchTrendingProducts, fetchNewArrivals } from "../store/slices/productSlice"
+
+import {
+  fetchTrendingProducts,
+  fetchNewArrivals,
+} from "../store/slices/productSlice"
 import { fetchCategories } from "../store/slices/categorySlice"
-import { fetchHeroBanners, fetchPromoBanners } from "../store/slices/bannerSlice"
+import {
+  fetchHeroBanners,
+  fetchPromoBanners,
+} from "../store/slices/bannerSlice"
 
 const HomePage = () => {
   const dispatch = useDispatch()
-  const { isLoading } = useSelector((state) => state.products)
 
+  // Get necessary slices of state
+  const {
+    trendingProducts,
+    newArrivals,
+  } = useSelector((state) => state.products)
+
+  const { categories } = useSelector((state) => state.categories)
+  const { heroBanners, promoBanners } = useSelector((state) => state.banners)
+
+  // Fetch hero and promo banners only if not already loaded
   useEffect(() => {
-    // Fetch all homepage data
-    dispatch(fetchHeroBanners())
-    dispatch(fetchCategories({ showOnHomepage: true }))
-    dispatch(fetchTrendingProducts())
-    dispatch(fetchNewArrivals())
-    dispatch(fetchPromoBanners())
-  }, [dispatch])
+    if (!heroBanners.length) {
+      dispatch(fetchHeroBanners())
+    }
 
-  if (isLoading) {
-    return <LoadingSpinner />
-  }
+    if (!promoBanners.length) {
+      dispatch(fetchPromoBanners())
+    }
+  }, [dispatch, heroBanners.length, promoBanners.length])
+
+  // Fetch categories only if not already loaded
+  useEffect(() => {
+    if (!categories.length) {
+      dispatch(fetchCategories({ showOnHomepage: true }))
+    }
+  }, [dispatch, categories.length])
+
+  // Fetch trending & new arrival products only if not already loaded
+  useEffect(() => {
+    if (!trendingProducts.length) {
+      dispatch(fetchTrendingProducts())
+    }
+
+    if (!newArrivals.length) {
+      dispatch(fetchNewArrivals())
+    }
+  }, [dispatch, trendingProducts.length, newArrivals.length])
 
   return (
     <div className="min-h-screen bg-white">

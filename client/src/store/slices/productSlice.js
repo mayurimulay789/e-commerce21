@@ -62,7 +62,10 @@ const initialState = {
     totalPages: 0,
     currentPage: 1,
   },
-  isLoading: false,
+  isLoadingProducts: false,
+  isLoadingTrending: false,
+  isLoadingNewArrivals: false,
+  isLoadingProductById: false,
   error: null,
   filters: {
     category: "",
@@ -96,11 +99,11 @@ const productSlice = createSlice({
     builder
       // Fetch Products
       .addCase(fetchProducts.pending, (state) => {
-        state.isLoading = true;
+        state.isLoadingProducts = true;
         state.error = null;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingProducts = false;
         state.products = action.payload.products || [];
         state.pagination = action.payload.pagination || {
           total: 0,
@@ -109,46 +112,46 @@ const productSlice = createSlice({
         };
       })
       .addCase(fetchProducts.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingProducts = false;
         state.error = action.payload;
       })
       // Fetch Trending Products
       .addCase(fetchTrendingProducts.pending, (state) => {
-        state.isLoading = true;
+        state.isLoadingTrending = true;
         state.error = null;
       })
       .addCase(fetchTrendingProducts.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingTrending = false;
         state.trendingProducts = action.payload.products || [];
       })
       .addCase(fetchTrendingProducts.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingTrending = false;
         state.error = action.payload;
       })
       // Fetch New Arrivals
       .addCase(fetchNewArrivals.pending, (state) => {
-        state.isLoading = true;
+        state.isLoadingNewArrivals = true;
         state.error = null;
       })
       .addCase(fetchNewArrivals.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingNewArrivals = false;
         state.newArrivals = action.payload.products || [];
       })
       .addCase(fetchNewArrivals.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingNewArrivals = false;
         state.error = action.payload;
       })
       // Fetch Product By ID
       .addCase(fetchProductById.pending, (state) => {
-        state.isLoading = true;
+        state.isLoadingProductById = true;
         state.error = null;
       })
       .addCase(fetchProductById.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingProductById = false;
         state.currentProduct = action.payload.product || null;
       })
       .addCase(fetchProductById.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingProductById = false;
         state.error = action.payload;
       });
   },

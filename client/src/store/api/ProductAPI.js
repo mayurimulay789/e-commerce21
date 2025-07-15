@@ -7,7 +7,7 @@ const productAPI = {
 
   getTrendingProducts: () => axios.get(`${API_URL}/products/trending`),
 
-  getNewArrivals: () => axios.get(`${API_URL}/products/new-arrivals`),
+getNewArrivals: () => axios.get(`${API_URL}/products/new`),
 
   getProductById: (id) => axios.get(`${API_URL}/products/${id}`),
 

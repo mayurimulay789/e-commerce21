@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate, useLocation, Link } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
@@ -196,14 +196,14 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center p-4">
+    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-pink-50 via-white to-purple-50">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="mb-8 text-center">
           <Link to="/" className="inline-block mb-6">
             <img src="/placeholder-logo.png" alt="Fashion Store" className="h-12 mx-auto" />
           </Link>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="mb-2 text-3xl font-bold text-gray-800">
             {mode === "login" ? "Welcome Back" : "Create Account"}
           </h1>
           <p className="text-gray-600">
@@ -211,9 +211,9 @@ const LoginPage = () => {
           </p>
         </div>
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="p-8 bg-white shadow-xl rounded-2xl">
           {/* Mode Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
+          <div className="flex p-1 mb-6 bg-gray-100 rounded-lg">
             <button
               onClick={() => handleModeChange("login")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -232,7 +232,7 @@ const LoginPage = () => {
             </button>
           </div>
           {/* Auth Method Tabs */}
-          <div className="flex bg-gray-50 rounded-lg p-1 mb-6">
+          <div className="flex p-1 mb-6 rounded-lg bg-gray-50">
             <button
               onClick={() => handleTabChange("email")}
               className={`flex-1 flex items-center justify-center py-3 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -265,14 +265,14 @@ const LoginPage = () => {
                 <form onSubmit={handleEmailSubmit} className="space-y-4">
                   {mode === "register" && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Full Name</label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <User className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
                         <input
                           type="text"
                           value={emailForm.name}
                           onChange={(e) => setEmailForm({ ...emailForm, name: e.target.value })}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+                          className="w-full py-3 pl-10 pr-4 transition-colors border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                           placeholder="Enter your full name"
                           required
                         />
@@ -280,35 +280,35 @@ const LoginPage = () => {
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Mail className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
                       <input
                         type="email"
                         value={emailForm.email}
                         onChange={(e) => setEmailForm({ ...emailForm, email: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+                        className="w-full py-3 pl-10 pr-4 transition-colors border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                         placeholder="Enter your email"
                         required
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">Password</label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Lock className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
                       <input
                         type={showPassword ? "text" : "password"}
                         value={emailForm.password}
                         onChange={(e) => setEmailForm({ ...emailForm, password: e.target.value })}
-                        className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+                        className="w-full py-3 pl-10 pr-12 transition-colors border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                         placeholder="Enter your password"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -316,14 +316,14 @@ const LoginPage = () => {
                   </div>
                   {mode === "register" && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Confirm Password</label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <Lock className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
                         <input
                           type={showPassword ? "text" : "password"}
                           value={emailForm.confirmPassword}
                           onChange={(e) => setEmailForm({ ...emailForm, confirmPassword: e.target.value })}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+                          className="w-full py-3 pl-10 pr-4 transition-colors border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                           placeholder="Confirm your password"
                           required
                         />
@@ -335,7 +335,7 @@ const LoginPage = () => {
                       <button
                         type="button"
                         onClick={() => setShowForgotPassword(true)}
-                        className="text-sm text-pink-600 hover:text-pink-700 font-medium"
+                        className="text-sm font-medium text-pink-600 hover:text-pink-700"
                       >
                         Forgot Password?
                       </button>
@@ -344,7 +344,7 @@ const LoginPage = () => {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-pink-600 text-white py-3 px-4 rounded-lg hover:bg-pink-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-colors font-medium flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center w-full px-4 py-3 font-medium text-white transition-colors bg-pink-600 rounded-lg hover:bg-pink-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -369,27 +369,27 @@ const LoginPage = () => {
                 <form onSubmit={handlePhoneSubmit} className="space-y-4">
                   {!confirmationResult ? (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Phone Number</label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <Phone className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
                         <input
                           type="tel"
                           value={phoneForm.phoneNumber}
                           onChange={(e) => setPhoneForm({ ...phoneForm, phoneNumber: e.target.value })}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+                          className="w-full py-3 pl-10 pr-4 transition-colors border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                           placeholder="+1 (555) 123-4567"
                           required
                         />
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Include country code (e.g., +1 for US)</p>
+                      <p className="mt-1 text-xs text-gray-500">Include country code (e.g., +1 for US)</p>
                     </div>
                   ) : (
                     <>
-                      <div className="text-center mb-4">
-                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <div className="mb-4 text-center">
+                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 bg-green-100 rounded-full">
                           <CheckCircle className="w-8 h-8 text-green-600" />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-1">Verification Code Sent</h3>
+                        <h3 className="mb-1 text-lg font-semibold text-gray-800">Verification Code Sent</h3>
                         <p className="text-sm text-gray-600">
                           We've sent a 6-digit code to
                           <br />
@@ -397,7 +397,7 @@ const LoginPage = () => {
                         </p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Verification Code</label>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Verification Code</label>
                         <input
                           type="text"
                           value={phoneForm.otp}
@@ -405,7 +405,7 @@ const LoginPage = () => {
                             const value = e.target.value.replace(/\D/g, "").slice(0, 6)
                             setPhoneForm({ ...phoneForm, otp: value })
                           }}
-                          className="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors text-center text-2xl font-mono tracking-widest"
+                          className="w-full px-4 py-3 font-mono text-2xl tracking-widest text-center transition-colors border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                           placeholder="000000"
                           maxLength={6}
                           required
@@ -416,7 +416,7 @@ const LoginPage = () => {
                           type="button"
                           onClick={handleResendOTP}
                           disabled={otpTimer > 0 || isLoading}
-                          className="text-sm text-pink-600 hover:text-pink-700 font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
+                          className="text-sm font-medium text-pink-600 hover:text-pink-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                         >
                           {otpTimer > 0 ? `Resend code in ${otpTimer}s` : isLoading ? "Sending..." : "Resend code"}
                         </button>
@@ -426,7 +426,7 @@ const LoginPage = () => {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-pink-600 text-white py-3 px-4 rounded-lg hover:bg-pink-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-colors font-medium flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center w-full px-4 py-3 font-medium text-white transition-colors bg-pink-600 rounded-lg hover:bg-pink-700 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -445,7 +445,7 @@ const LoginPage = () => {
                         setPhoneForm({ phoneNumber: "", otp: "" })
                         setOtpTimer(0)
                       }}
-                      className="w-full text-gray-600 hover:text-gray-800 py-2 text-sm font-medium"
+                      className="w-full py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
                     >
                       Change Phone Number
                     </button>
@@ -456,14 +456,14 @@ const LoginPage = () => {
           </AnimatePresence>
         </div>
         {/* Footer */}
-        <div className="text-center mt-6">
+        <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
             By continuing, you agree to our{" "}
-            <Link to="/terms" className="text-pink-600 hover:text-pink-700 font-medium">
+            <Link to="/terms" className="font-medium text-pink-600 hover:text-pink-700">
               Terms of Service
             </Link>{" "}
             and{" "}
-            <Link to="/privacy" className="text-pink-600 hover:text-pink-700 font-medium">
+            <Link to="/privacy" className="font-medium text-pink-600 hover:text-pink-700">
               Privacy Policy
             </Link>
           </p>
@@ -475,35 +475,35 @@ const LoginPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
               onClick={() => setShowForgotPassword(false)}
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white rounded-2xl p-6 w-full max-w-md"
+                className="w-full max-w-md p-6 bg-white rounded-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="mb-6 text-center">
+                  <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-pink-100 rounded-full">
                     <AlertCircle className="w-8 h-8 text-pink-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Reset Password</h3>
-                  <p className="text-gray-600 text-sm">
+                  <h3 className="mb-2 text-xl font-semibold text-gray-800">Reset Password</h3>
+                  <p className="text-sm text-gray-600">
                     Enter your email address and we'll send you a link to reset your password.
                   </p>
                 </div>
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Mail className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
                       <input
                         type="email"
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+                        className="w-full py-3 pl-10 pr-4 transition-colors border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                         placeholder="Enter your email"
                         required
                       />
@@ -513,14 +513,14 @@ const LoginPage = () => {
                     <button
                       type="button"
                       onClick={() => setShowForgotPassword(false)}
-                      className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                      className="flex-1 px-4 py-3 font-medium text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-1 bg-pink-600 text-white py-3 px-4 rounded-lg hover:bg-pink-700 transition-colors font-medium flex items-center justify-center disabled:opacity-50"
+                      className="flex items-center justify-center flex-1 px-4 py-3 font-medium text-white transition-colors bg-pink-600 rounded-lg hover:bg-pink-700 disabled:opacity-50"
                     >
                       {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Reset Link"}
                     </button>

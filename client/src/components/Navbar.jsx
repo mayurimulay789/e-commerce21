@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion"
@@ -180,10 +180,10 @@ const Navbar = () => {
                 <Sparkles className="w-5 h-5 text-white" />
               </motion.div>
               <div className="flex flex-col">
-                <span className="text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="text-xl font-bold text-transparent bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text">
                   FashionHub
                 </span>
-                <span className="text-xs text-gray-500 -mt-1">Elegance Redefined</span>
+                <span className="-mt-1 text-xs text-gray-500">Elegance Redefined</span>
               </div>
             </motion.div>
           </Link>
@@ -205,12 +205,12 @@ const Navbar = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
-                className="w-full py-3 pl-12 pr-4 text-sm transition-all duration-300 border-0 rounded-full outline-none placeholder-gray-400"
+                className="w-full py-3 pl-12 pr-4 text-sm placeholder-gray-400 transition-all duration-300 border-0 rounded-full outline-none"
                 whileFocus={{ scale: 1.02 }}
               />
               <motion.button
                 type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-pink-500 to-purple-600 text-white p-2 rounded-full"
+                className="absolute p-2 text-white transform -translate-y-1/2 rounded-full right-2 top-1/2 bg-gradient-to-r from-pink-500 to-purple-600"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -237,7 +237,7 @@ const Navbar = () => {
                       initial="initial"
                       animate="animate"
                       whileHover="hover"
-                      className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-gradient-to-r from-pink-500 to-red-500 rounded-full"
+                      className="absolute flex items-center justify-center w-5 h-5 text-xs font-bold text-white rounded-full -top-1 -right-1 bg-gradient-to-r from-pink-500 to-red-500"
                     >
                       {wishlistItems.length}
                     </motion.span>
@@ -262,7 +262,7 @@ const Navbar = () => {
                       initial="initial"
                       animate="animate"
                       whileHover="hover"
-                      className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+                      className="absolute flex items-center justify-center w-5 h-5 text-xs font-bold text-white rounded-full -top-1 -right-1 bg-gradient-to-r from-purple-500 to-pink-500"
                     >
                       {cartItems.reduce((total, item) => total + item.quantity, 0)}
                     </motion.span>
@@ -282,7 +282,7 @@ const Navbar = () => {
                 >
                   <div className="relative">
                     <User className="w-5 h-5" />
-                    {user?.role === "admin" && <Crown className="absolute -top-1 -right-1 w-3 h-3 text-yellow-500" />}
+                    {user?.role === "admin" && <Crown className="absolute w-3 h-3 text-yellow-500 -top-1 -right-1" />}
                   </div>
                   <span className="hidden text-sm font-medium lg:block">{user?.name || "Profile"}</span>
                   <motion.div animate={{ rotate: showUserMenu ? 180 : 0 }}>
@@ -310,7 +310,7 @@ const Navbar = () => {
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className="absolute right-0 w-56 py-2 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl backdrop-blur-lg"
+                    className="absolute right-0 w-56 py-2 mt-2 bg-white border border-gray-100 shadow-xl rounded-2xl backdrop-blur-lg"
                   >
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="text-sm font-medium text-gray-900">{user?.name}</p>
@@ -320,7 +320,7 @@ const Navbar = () => {
                     <motion.div whileHover={{ x: 4 }}>
                       <Link
                         to="/profile"
-                        className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                        className="flex items-center px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-pink-50 hover:text-pink-600"
                         onClick={() => setShowUserMenu(false)}
                       >
                         <Settings className="w-4 h-4 mr-3" />
@@ -331,7 +331,7 @@ const Navbar = () => {
                     <motion.div whileHover={{ x: 4 }}>
                       <Link
                         to="/orders"
-                        className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                        className="flex items-center px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-pink-50 hover:text-pink-600"
                         onClick={() => setShowUserMenu(false)}
                       >
                         <Package className="w-4 h-4 mr-3" />
@@ -343,7 +343,7 @@ const Navbar = () => {
                       <motion.div whileHover={{ x: 4 }}>
                         <Link
                           to="/admin"
-                          className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                          className="flex items-center px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-pink-50 hover:text-pink-600"
                           onClick={() => setShowUserMenu(false)}
                         >
                           <Crown className="w-4 h-4 mr-3 text-yellow-500" />
@@ -352,11 +352,11 @@ const Navbar = () => {
                       </motion.div>
                     )}
 
-                    <div className="border-t border-gray-100 mt-2">
+                    <div className="mt-2 border-t border-gray-100">
                       <motion.button
                         whileHover={{ x: 4 }}
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-3 text-sm text-left text-red-600 hover:bg-red-50 transition-colors"
+                        className="flex items-center w-full px-4 py-3 text-sm text-left text-red-600 transition-colors hover:bg-red-50"
                       >
                         <LogOut className="w-4 h-4 mr-3" />
                         Logout
@@ -439,7 +439,7 @@ const Navbar = () => {
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="absolute left-0 w-56 py-2 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl backdrop-blur-lg top-full"
+                  className="absolute left-0 w-56 py-2 mt-2 bg-white border border-gray-100 shadow-xl rounded-2xl backdrop-blur-lg top-full"
                 >
                   {womenCategories.map((category, index) => (
                     <motion.div
@@ -451,7 +451,7 @@ const Navbar = () => {
                     >
                       <Link
                         to={`/products/${category.slug}`}
-                        className="block px-4 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                        className="block px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-pink-50 hover:text-pink-600"
                       >
                         {category.name}
                       </Link>
@@ -493,7 +493,7 @@ const Navbar = () => {
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="absolute left-0 w-56 py-2 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl backdrop-blur-lg top-full"
+                  className="absolute left-0 w-56 py-2 mt-2 bg-white border border-gray-100 shadow-xl rounded-2xl backdrop-blur-lg top-full"
                 >
                   {menCategories.map((category, index) => (
                     <motion.div
@@ -505,7 +505,7 @@ const Navbar = () => {
                     >
                       <Link
                         to={`/products/${category.slug}`}
-                        className="block px-4 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                        className="block px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-pink-50 hover:text-pink-600"
                       >
                         {category.name}
                       </Link>
@@ -565,7 +565,7 @@ const Navbar = () => {
                     placeholder="Discover your perfect style..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full py-3 pl-12 pr-4 text-sm bg-gray-50 border-0 rounded-full outline-none placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-pink-200"
+                    className="w-full py-3 pl-12 pr-4 text-sm placeholder-gray-400 border-0 rounded-full outline-none bg-gray-50 focus:bg-white focus:ring-2 focus:ring-pink-200"
                   />
                 </motion.form>
 
@@ -579,7 +579,7 @@ const Navbar = () => {
                   <motion.div whileHover={{ x: 4 }}>
                     <Link
                       to="/products/women"
-                      className="block py-3 text-lg font-medium text-gray-700 hover:text-pink-600 transition-colors"
+                      className="block py-3 text-lg font-medium text-gray-700 transition-colors hover:text-pink-600"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Women
@@ -589,7 +589,7 @@ const Navbar = () => {
                   <motion.div whileHover={{ x: 4 }}>
                     <Link
                       to="/products/men"
-                      className="block py-3 text-lg font-medium text-gray-700 hover:text-pink-600 transition-colors"
+                      className="block py-3 text-lg font-medium text-gray-700 transition-colors hover:text-pink-600"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Men
@@ -606,7 +606,7 @@ const Navbar = () => {
                     >
                       <Link
                         to={`/products/${category.slug}`}
-                        className="block py-3 text-lg font-medium text-gray-700 hover:text-pink-600 transition-colors"
+                        className="block py-3 text-lg font-medium text-gray-700 transition-colors hover:text-pink-600"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         {category.name}
@@ -624,13 +624,13 @@ const Navbar = () => {
                 >
                   <Link
                     to="/wishlist"
-                    className="flex flex-col items-center space-y-1 text-gray-700 hover:text-pink-600 transition-colors"
+                    className="flex flex-col items-center space-y-1 text-gray-700 transition-colors hover:text-pink-600"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <div className="relative">
                       <Heart className="w-6 h-6" />
                       {wishlistItems.length > 0 && (
-                        <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-pink-500 rounded-full">
+                        <span className="absolute flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-pink-500 rounded-full -top-2 -right-2">
                           {wishlistItems.length}
                         </span>
                       )}
@@ -641,7 +641,7 @@ const Navbar = () => {
                   {token ? (
                     <Link
                       to="/profile"
-                      className="flex flex-col items-center space-y-1 text-gray-700 hover:text-pink-600 transition-colors"
+                      className="flex flex-col items-center space-y-1 text-gray-700 transition-colors hover:text-pink-600"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <User className="w-6 h-6" />
@@ -650,7 +650,7 @@ const Navbar = () => {
                   ) : (
                     <Link
                       to="/login"
-                      className="flex flex-col items-center space-y-1 text-gray-700 hover:text-pink-600 transition-colors"
+                      className="flex flex-col items-center space-y-1 text-gray-700 transition-colors hover:text-pink-600"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <User className="w-6 h-6" />

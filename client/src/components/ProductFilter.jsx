@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { motion } from "framer-motion"
 import { ChevronDown, ChevronUp, X } from "lucide-react"
 
@@ -10,6 +10,8 @@ const ProductFilters = ({ filters, categories, onFilterChange, onClearFilters, o
     price: true,
     rating: false,
   })
+
+  const [selectedRatings, setSelectedRatings] = useState(filters.ratings || [])
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -22,6 +24,15 @@ const ProductFilters = ({ filters, categories, onFilterChange, onClearFilters, o
     onFilterChange({
       [field]: value,
     })
+  }
+
+  const handleRatingChange = (rating) => {
+    setSelectedRatings((prev) =>
+      prev.includes(rating)
+        ? prev.filter((r) => r !== rating)
+        : [...prev, rating]
+    )
+    onFilterChange({ ratings: selectedRatings })
   }
 
   const priceRanges = [
@@ -125,7 +136,7 @@ const ProductFilters = ({ filters, categories, onFilterChange, onClearFilters, o
                 <input
                   type="number"
                   placeholder="₹0"
-                  value={filters.minPrice}
+                  value={filters.minPrice || ""}
                   onChange={(e) => handlePriceChange("minPrice", e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                 />
@@ -135,7 +146,7 @@ const ProductFilters = ({ filters, categories, onFilterChange, onClearFilters, o
                 <input
                   type="number"
                   placeholder="₹∞"
-                  value={filters.maxPrice}
+                  value={filters.maxPrice || ""}
                   onChange={(e) => handlePriceChange("maxPrice", e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                 />
@@ -180,7 +191,12 @@ const ProductFilters = ({ filters, categories, onFilterChange, onClearFilters, o
           <div className="mt-3 space-y-2">
             {ratings.map((rating) => (
               <label key={rating} className="flex items-center">
-                <input type="checkbox" className="mr-3 text-pink-600 focus:ring-pink-500" />
+                <input
+                  type="checkbox"
+                  checked={selectedRatings.includes(rating)}
+                  onChange={() => handleRatingChange(rating)}
+                  className="mr-3 text-pink-600 focus:ring-pink-500"
+                />
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
                     <svg
@@ -202,4 +218,4 @@ const ProductFilters = ({ filters, categories, onFilterChange, onClearFilters, o
   )
 }
 
-export default ProductFilters
+export default ProductFilters;

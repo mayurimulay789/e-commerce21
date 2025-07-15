@@ -14,9 +14,22 @@ const parseJson = (data, fallback) => {
 // Get all products with filters
 const getProducts = async (req, res) => {
   try {
-    const { category, tag, minPrice, maxPrice, sort, page = 1, limit = 12, search } = req.query;
+    const {
+      category,
+      tag,
+      minPrice,
+      maxPrice,
+      sort,
+      page = 1,
+      limit = 12,
+      search,
+      sizes,
+      colors,
+      rating,
+    } = req.query;
 
     const query = { isActive: true };
+
     if (category) query.category = category;
     if (tag) query.tags = { $in: [tag] };
     if (minPrice || maxPrice) {
@@ -30,6 +43,17 @@ const getProducts = async (req, res) => {
         { description: { $regex: search, $options: "i" } },
       ];
     }
+    if (sizes) {
+      const arr = Array.isArray(sizes) ? sizes : [sizes];
+      query["sizes.size"] = { $in: arr };
+    }
+    if (colors) {
+      const arr = Array.isArray(colors) ? colors : [colors];
+      query["colors.name"] = { $in: arr };
+    }
+    if (rating) {
+      query["rating.average"] = { $gte: Number(rating) };
+    }
 
     const sortOptions = {
       "price-low": { price: 1 },
@@ -39,13 +63,14 @@ const getProducts = async (req, res) => {
     };
     const sortOption = sortOptions[sort] || { createdAt: -1 };
 
-    const products = await Product.find(query)
-      .populate("category", "name slug")
-      .sort(sortOption)
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
-
-    const total = await Product.countDocuments(query);
+    const [products, total] = await Promise.all([
+      Product.find(query)
+        .populate("category", "name slug")
+        .sort(sortOption)
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      Product.countDocuments(query),
+    ]);
 
     res.status(200).json({
       success: true,
@@ -61,6 +86,7 @@ const getProducts = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch products" });
   }
 };
+
 
 // Get trending products
 const getTrendingProducts = async (req, res) => {
@@ -257,14 +283,99 @@ const addReview = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to add review" });
   }
 };
+const getSearchedProducts = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.status(400).json({ success: false, message: "Query string is required" });
+
+    const products = await Product.find({
+      isActive: true,
+      $or: [
+        { name: { $regex: q, $options: "i" } },
+        { description: { $regex: q, $options: "i" } },
+      ],
+    }).populate("category", "name slug");
+
+    res.status(200).json({ success: true, products });
+  } catch (error) {
+    console.error("Search products error:", error);
+    res.status(500).json({ success: false, message: "Failed to search products" });
+  }
+};
+const getProductsByCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const {
+      sort,
+      page = 1,
+      limit = 12,
+      sizes,
+      colors,
+      minPrice,
+      maxPrice,
+      rating,
+    } = req.query;
+
+    const query = { category: categoryId, isActive: true };
+
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+    if (sizes) {
+      const arr = Array.isArray(sizes) ? sizes : [sizes];
+      query["sizes.size"] = { $in: arr };
+    }
+    if (colors) {
+      const arr = Array.isArray(colors) ? colors : [colors];
+      query["colors.name"] = { $in: arr };
+    }
+    if (rating) {
+      query["rating.average"] = { $gte: Number(rating) };
+    }
+
+    const sortOptions = {
+      "price-low": { price: 1 },
+      "price-high": { price: -1 },
+      rating: { "rating.average": -1 },
+      newest: { createdAt: -1 },
+    };
+    const sortOption = sortOptions[sort] || { createdAt: -1 };
+
+    const [products, total] = await Promise.all([
+      Product.find(query)
+        .populate("category", "name slug")
+        .sort(sortOption)
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      Product.countDocuments(query),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      products,
+      pagination: {
+        current: Number(page),
+        pages: Math.ceil(total / limit),
+        total,
+      },
+    });
+  } catch (error) {
+    console.error("Get products by category error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch category products" });
+  }
+};
 
 module.exports = {
   getProducts,
-  getTrendingProducts,
-  getNewArrivals,
   getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
   addReview,
+  getTrendingProducts,
+  getNewArrivals,
+  getSearchedProducts,
+  getProductsByCategory,
 };

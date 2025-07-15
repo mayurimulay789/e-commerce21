@@ -9,15 +9,18 @@ import { fetchProducts, setFilters, clearFilters } from "../store/slices/product
 import { fetchCategories } from "../store/slices/categorySlice"
 import { addToWishlist, removeFromWishlist } from "../store/slices/wishlistSlice"
 import { addToCart } from "../store/slices/cartSlice"
+import { useDebounce } from 'use-debounce'
 
 import LoadingSpinner from "../components/LoadingSpinner"
 import ProductCard from "../components/ProductCard"
 import toast from "react-hot-toast"
 
+
 const ProductListingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
+const [debouncedFilters] = useDebounce(localFilters, 500)
 
   const { products, filters, pagination, isLoading } = useSelector((state) => state.products)
   const { categories } = useSelector((state) => state.categories)
@@ -61,15 +64,14 @@ const ProductListingPage = () => {
   }, [dispatch])
 
   useEffect(() => {
-    const params = {
-      page: 1,
-      limit: 20,
-      ...localFilters,
-    }
-    dispatch(fetchProducts(params))
-    dispatch(setFilters(localFilters))
-  }, [dispatch, localFilters])
-
+  const params = {
+    page: 1,
+    limit: 20,
+    ...debouncedFilters,
+  }
+  dispatch(fetchProducts(params))
+  dispatch(setFilters(debouncedFilters))
+}, [dispatch, debouncedFilters])
   const handleFilterChange = (key, value) => {
     setLocalFilters((prev) => ({
       ...prev,

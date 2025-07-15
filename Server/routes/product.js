@@ -1,27 +1,28 @@
 const express = require("express");
 const router = express.Router();
-
 const {
   getProducts,
-  getTrendingProducts,
-  getNewArrivals,
   getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
   addReview,
+  getTrendingProducts,
+  getNewArrivals,
+  getSearchedProducts,
+  getProductsByCategory,
 } = require("../controllers/productController");
 
-const { protect, adminAuth } = require("../middleware/auth");
-const upload = require("../middleware/upload");
-
+// Routes
 router.get("/", getProducts);
+router.get("/search", getSearchedProducts);
 router.get("/trending", getTrendingProducts);
-router.get("/new-arrivals", getNewArrivals);
+router.get("/new", getNewArrivals);
+router.get("/category/:categoryId", getProductsByCategory);
 router.get("/:id", getProduct);
-router.post("/", protect, adminAuth, upload.array("images", 10), createProduct);
-router.put("/:id", protect, adminAuth, upload.array("images", 10), updateProduct);
-router.delete("/:id", protect, adminAuth, deleteProduct);
-router.post("/:id/reviews", protect, upload.array("images", 5), addReview);
+router.post("/", createProduct);
+router.put("/:id", updateProduct);
+router.delete("/:id", deleteProduct);
+router.post("/:id/review", addReview);
 
 module.exports = router;

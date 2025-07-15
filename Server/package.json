@@ -30,7 +30,13 @@
   "devDependencies": {
     "nodemon": "^3.1.10"
   },
-  "keywords": ["ecommerce", "fashion", "nodejs", "express", "mongodb"],
+  "keywords": [
+    "ecommerce",
+    "fashion",
+    "nodejs",
+    "express",
+    "mongodb"
+  ],
   "author": "FashionHub Team",
   "license": "MIT"
 }

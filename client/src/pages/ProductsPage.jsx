@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
@@ -26,63 +26,79 @@ const ProductsPage = () => {
   const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState("newest")
 
-  // Initialize filters from URL params
-  useEffect(() => {
-    const urlFilters = {
-      category: searchParams.get("category") || "",
-      search: searchParams.get("search") || "",
-      minPrice: searchParams.get("minPrice") || "",
-      maxPrice: searchParams.get("maxPrice") || "",
-      sort: searchParams.get("sort") || "newest",
-    }
+  // Helper to parse filters from URL params
+  const getFiltersFromURL = useCallback(() => ({
+    category: searchParams.get("category") || "",
+    search: searchParams.get("search") || "",
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
+    sort: searchParams.get("sort") || "newest",
+  }), [searchParams])
 
+  // Initialize filters from URL params on mount or searchParams change
+  useEffect(() => {
+    const urlFilters = getFiltersFromURL()
     dispatch(setFilters(urlFilters))
     setSortBy(urlFilters.sort)
-  }, [searchParams, dispatch])
+  }, [getFiltersFromURL, dispatch])
 
-  // Fetch categories on mount
+  // Fetch categories once on mount
   useEffect(() => {
     dispatch(fetchCategories())
   }, [dispatch])
 
-  // Fetch products when filters change
+  // Fetch products whenever filters or page change
   useEffect(() => {
+    const page = searchParams.get("page") || 1
     const params = {
       ...filters,
-      page: searchParams.get("page") || 1,
+      page,
       limit: 12,
     }
-
     dispatch(fetchProducts(params))
   }, [dispatch, filters, searchParams])
 
-  // Update URL when filters change
+  // Update URL params whenever filters change
   useEffect(() => {
+    // Build new params object from filters and current page param if exists
     const params = new URLSearchParams()
 
     Object.entries(filters).forEach(([key, value]) => {
-      if (value) params.set(key, value)
+      if (value && !(key === "sort" && value === "newest")) {
+        params.set(key, value)
+      }
     })
 
     const page = searchParams.get("page")
-    if (page && page !== "1") params.set("page", page)
+    if (page && page !== "1") {
+      params.set("page", page)
+    }
 
-    setSearchParams(params)
-  }, [filters, setSearchParams, searchParams])
+    // Only update URL params if different to avoid infinite loops
+    const currentParamsString = searchParams.toString()
+    const newParamsString = params.toString()
 
+    if (currentParamsString !== newParamsString) {
+      setSearchParams(params)
+    }
+  }, [filters, searchParams, setSearchParams])
+
+  // Handle filter change - merge new filters with existing
   const handleFilterChange = (newFilters) => {
-    dispatch(setFilters(newFilters))
+    dispatch(setFilters({ ...filters, ...newFilters }))
     // Reset to page 1 when filters change
     const params = new URLSearchParams(searchParams)
     params.delete("page")
     setSearchParams(params)
   }
 
+  // Handle sort change separately, updating local state and filters
   const handleSortChange = (sort) => {
     setSortBy(sort)
     handleFilterChange({ sort })
   }
 
+  // Handle pagination clicks
   const handlePageChange = (page) => {
     const params = new URLSearchParams(searchParams)
     if (page === 1) {
@@ -94,19 +110,28 @@ const ProductsPage = () => {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  // Clear all filters and reset sort and URL
   const clearAllFilters = () => {
     dispatch(clearFilters())
     setSearchParams({})
     setSortBy("newest")
   }
 
-  const getActiveFiltersCount = () => {
-    return Object.values(filters).filter((value) => value && value !== "newest").length
-  }
+  // Count active filters excluding default sort
+  const getActiveFiltersCount = () =>
+    Object.entries(filters).reduce((count, [key, value]) => {
+      if (value && !(key === "sort" && value === "newest")) {
+        return count + 1
+      }
+      return count
+    }, 0)
 
-  if (error) {
-    toast.error(error)
-  }
+  // Show error toast once if there's an error
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+    }
+  }, [error])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -119,7 +144,9 @@ const ProductsPage = () => {
             <h1 className="mb-2 text-3xl font-bold text-gray-800">
               {filters.search ? `Search results for "${filters.search}"` : "All Products"}
             </h1>
-            <p className="text-gray-600">{pagination ? `${pagination.total} products found` : "Loading products..."}</p>
+            <p className="text-gray-600">
+              {pagination ? `${pagination.total} products found` : "Loading products..."}
+            </p>
           </div>
 
           {/* View Controls */}
@@ -140,12 +167,14 @@ const ProductsPage = () => {
             <div className="flex overflow-hidden border border-gray-300 rounded-lg">
               <button
                 onClick={() => setViewMode("grid")}
+                aria-label="Grid view"
                 className={`p-2 ${viewMode === "grid" ? "bg-pink-500 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
               >
                 <Grid className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
+                aria-label="List view"
                 className={`p-2 ${viewMode === "list" ? "bg-pink-500 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
               >
                 <List className="w-5 h-5" />
@@ -156,6 +185,7 @@ const ProductsPage = () => {
             <button
               onClick={() => setShowFilters(true)}
               className="flex items-center px-4 py-2 space-x-2 text-white transition-colors bg-pink-500 rounded-lg md:hidden hover:bg-pink-600"
+              aria-label="Open filters"
             >
               <Filter className="w-4 h-4" />
               <span>Filters</span>
@@ -173,7 +203,7 @@ const ProductsPage = () => {
             {filters.category && (
               <span className="inline-flex items-center px-3 py-1 text-sm text-pink-800 bg-pink-100 rounded-full">
                 Category: {categories.find((cat) => cat._id === filters.category)?.name || filters.category}
-                <button onClick={() => handleFilterChange({ category: "" })} className="ml-2 hover:text-pink-600">
+                <button onClick={() => handleFilterChange({ category: "" })} className="ml-2 hover:text-pink-600" aria-label="Remove category filter">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -181,7 +211,7 @@ const ProductsPage = () => {
             {filters.search && (
               <span className="inline-flex items-center px-3 py-1 text-sm text-pink-800 bg-pink-100 rounded-full">
                 Search: {filters.search}
-                <button onClick={() => handleFilterChange({ search: "" })} className="ml-2 hover:text-pink-600">
+                <button onClick={() => handleFilterChange({ search: "" })} className="ml-2 hover:text-pink-600" aria-label="Remove search filter">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -192,6 +222,7 @@ const ProductsPage = () => {
                 <button
                   onClick={() => handleFilterChange({ minPrice: "", maxPrice: "" })}
                   className="ml-2 hover:text-pink-600"
+                  aria-label="Remove price filter"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -219,7 +250,11 @@ const ProductsPage = () => {
             {isLoading ? (
               <LoadingSpinner message="Loading products..." />
             ) : products.length === 0 ? (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-16 text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="py-16 text-center"
+              >
                 <div className="flex items-center justify-center w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full">
                   <SlidersHorizontal className="w-12 h-12 text-gray-400" />
                 </div>
@@ -239,10 +274,9 @@ const ProductsPage = () => {
                 {/* Products Grid */}
                 <motion.div
                   layout
-                  className={
-                    viewMode === "grid"
-                      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                      : "space-y-4"
+                  className={viewMode === "grid"
+                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    : "space-y-4"
                   }
                 >
                   <AnimatePresence>
@@ -252,7 +286,7 @@ const ProductsPage = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        transition={{ delay: index * 0.1 }}
+                        transition={{ delay: index * 0.05 }}
                       >
                         <ProductCard product={product} viewMode={viewMode} />
                       </motion.div>
@@ -267,6 +301,7 @@ const ProductsPage = () => {
                       onClick={() => handlePageChange(pagination.current - 1)}
                       disabled={pagination.current === 1}
                       className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      aria-label="Previous page"
                     >
                       Previous
                     </button>
@@ -280,6 +315,7 @@ const ProductsPage = () => {
                             ? "bg-pink-500 text-white border-pink-500"
                             : "border-gray-300 hover:bg-gray-50"
                         }`}
+                        aria-current={page === pagination.current ? "page" : undefined}
                       >
                         {page}
                       </button>
@@ -289,6 +325,7 @@ const ProductsPage = () => {
                       onClick={() => handlePageChange(pagination.current + 1)}
                       disabled={pagination.current === pagination.pages}
                       className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      aria-label="Next page"
                     >
                       Next
                     </button>
@@ -309,17 +346,28 @@ const ProductsPage = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 md:hidden"
           >
-            <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowFilters(false)} />
+            <div
+              className="absolute inset-0 bg-black bg-opacity-50"
+              onClick={() => setShowFilters(false)}
+              aria-hidden="true"
+            />
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               className="absolute top-0 left-0 h-full overflow-y-auto bg-white shadow-xl w-80"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="filters-title"
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">Filters</h2>
-                  <button onClick={() => setShowFilters(false)} className="p-2 rounded-full hover:bg-gray-100">
+                  <h2 id="filters-title" className="text-xl font-semibold">Filters</h2>
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="p-2 rounded-full hover:bg-gray-100"
+                    aria-label="Close filters"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>

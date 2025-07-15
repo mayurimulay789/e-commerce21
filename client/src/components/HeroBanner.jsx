@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import React,{ useState, useEffect, useRef } from "react"
 import { useSelector } from "react-redux"
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion"
 import { ChevronLeft, ChevronRight, Play, Pause, Sparkles, ArrowRight, Star } from "lucide-react"
@@ -176,16 +176,16 @@ const HeroBanner = () => {
         <motion.div
           variants={floatingElementVariants}
           animate="animate"
-          className="absolute top-20 left-20 w-20 h-20 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full opacity-20 blur-xl"
+          className="absolute w-20 h-20 rounded-full top-20 left-20 bg-gradient-to-r from-pink-400 to-purple-400 opacity-20 blur-xl"
         />
         <motion.div
           variants={floatingElementVariants}
           animate="animate"
-          className="absolute bottom-20 right-20 w-32 h-32 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full opacity-20 blur-xl"
+          className="absolute w-32 h-32 rounded-full bottom-20 right-20 bg-gradient-to-r from-purple-400 to-indigo-400 opacity-20 blur-xl"
           style={{ animationDelay: "2s" }}
         />
 
-        <div className="relative z-10 text-center px-4 max-w-4xl">
+        <div className="relative z-10 max-w-4xl px-4 text-center">
           <motion.div variants={textVariants} custom={0} className="mb-6">
             <motion.div
               animate={{ rotate: 360 }}
@@ -199,22 +199,22 @@ const HeroBanner = () => {
           <motion.h1
             variants={textVariants}
             custom={1}
-            className="mb-6 text-5xl md:text-7xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent"
+            className="mb-6 text-5xl font-bold text-transparent md:text-7xl bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text"
           >
             Welcome to FashionHub
           </motion.h1>
 
-          <motion.p variants={textVariants} custom={2} className="mb-8 text-xl md:text-2xl text-gray-600 font-light">
+          <motion.p variants={textVariants} custom={2} className="mb-8 text-xl font-light text-gray-600 md:text-2xl">
             Discover the latest fashion trends and elevate your style
           </motion.p>
 
           <motion.div variants={buttonVariants} initial="hidden" animate="visible" whileHover="hover" whileTap="tap">
             <Link
               to="/products"
-              className="group inline-flex items-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-pink-600 to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              className="inline-flex items-center px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-full shadow-lg group bg-gradient-to-r from-pink-600 to-purple-600 hover:shadow-xl"
             >
               Shop Now
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
             </Link>
           </motion.div>
         </div>
@@ -233,7 +233,7 @@ const HeroBanner = () => {
     >
       {/* Custom Cursor */}
       <motion.div
-        className="fixed w-4 h-4 bg-white rounded-full pointer-events-none z-50 mix-blend-difference"
+        className="fixed z-50 w-4 h-4 bg-white rounded-full pointer-events-none mix-blend-difference"
         style={{
           left: mousePosition.x - 8,
           top: mousePosition.y - 8,
@@ -313,7 +313,7 @@ const HeroBanner = () => {
                     <motion.div
                       variants={textVariants}
                       custom={0}
-                      className="inline-flex items-center px-4 py-2 mb-6 text-sm font-medium bg-white/20 backdrop-blur-sm rounded-full border border-white/30"
+                      className="inline-flex items-center px-4 py-2 mb-6 text-sm font-medium border rounded-full bg-white/20 backdrop-blur-sm border-white/30"
                     >
                       <Star className="w-4 h-4 mr-2 text-yellow-400" />
                       Premium Collection
@@ -322,7 +322,7 @@ const HeroBanner = () => {
                     <motion.h1
                       variants={textVariants}
                       custom={1}
-                      className="mb-4 text-4xl md:text-7xl font-bold leading-tight"
+                      className="mb-4 text-4xl font-bold leading-tight md:text-7xl"
                     >
                       <span className="block">{banner.title}</span>
                     </motion.h1>
@@ -331,7 +331,7 @@ const HeroBanner = () => {
                       <motion.p
                         variants={textVariants}
                         custom={2}
-                        className="mb-2 text-xl md:text-3xl font-light text-pink-200"
+                        className="mb-2 text-xl font-light text-pink-200 md:text-3xl"
                       >
                         {banner.subtitle}
                       </motion.p>
@@ -341,7 +341,7 @@ const HeroBanner = () => {
                       <motion.p
                         variants={textVariants}
                         custom={3}
-                        className="mb-8 text-lg md:text-xl text-gray-200 max-w-2xl leading-relaxed"
+                        className="max-w-2xl mb-8 text-lg leading-relaxed text-gray-200 md:text-xl"
                       >
                         {banner.description}
                       </motion.p>
@@ -354,18 +354,18 @@ const HeroBanner = () => {
                         animate="visible"
                         whileHover="hover"
                         whileTap="tap"
-                        className="flex flex-col sm:flex-row gap-4"
+                        className="flex flex-col gap-4 sm:flex-row"
                       >
                         <Link
                           to={banner.buttonLink}
-                          className="group inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-pink-600 to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-300 rounded-full shadow-lg group bg-gradient-to-r from-pink-600 to-purple-600 hover:shadow-xl"
                         >
                           {banner.buttonText}
-                          <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                         </Link>
 
                         <motion.button
-                          className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white border-2 border-white/30 rounded-full backdrop-blur-sm hover:bg-white/10 transition-all duration-300"
+                          className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-all duration-300 border-2 rounded-full border-white/30 backdrop-blur-sm hover:bg-white/10"
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
@@ -386,27 +386,27 @@ const HeroBanner = () => {
           {/* Navigation Arrows */}
           <motion.button
             onClick={prevSlide}
-            className="absolute left-6 top-1/2 transform -translate-y-1/2 p-3 text-white bg-white/20 backdrop-blur-sm rounded-full border border-white/30 hover:bg-white/30 transition-all duration-300 group"
+            className="absolute p-3 text-white transition-all duration-300 transform -translate-y-1/2 border rounded-full left-6 top-1/2 bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30 group"
             whileHover={{ scale: 1.1, x: -5 }}
             whileTap={{ scale: 0.9 }}
           >
-            <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+            <ChevronLeft className="w-6 h-6 transition-transform group-hover:-translate-x-1" />
           </motion.button>
 
           <motion.button
             onClick={nextSlide}
-            className="absolute right-6 top-1/2 transform -translate-y-1/2 p-3 text-white bg-white/20 backdrop-blur-sm rounded-full border border-white/30 hover:bg-white/30 transition-all duration-300 group"
+            className="absolute p-3 text-white transition-all duration-300 transform -translate-y-1/2 border rounded-full right-6 top-1/2 bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30 group"
             whileHover={{ scale: 1.1, x: 5 }}
             whileTap={{ scale: 0.9 }}
           >
-            <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-6 h-6 transition-transform group-hover:translate-x-1" />
           </motion.button>
 
           {/* Progress Indicators */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center space-x-4">
+          <div className="absolute flex items-center space-x-4 transform -translate-x-1/2 bottom-8 left-1/2">
             <motion.button
               onClick={toggleAutoPlay}
-              className="p-2 text-white bg-white/20 backdrop-blur-sm rounded-full border border-white/30 hover:bg-white/30 transition-all duration-300"
+              className="p-2 text-white transition-all duration-300 border rounded-full bg-white/20 backdrop-blur-sm border-white/30 hover:bg-white/30"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
@@ -429,7 +429,7 @@ const HeroBanner = () => {
                   />
                   {index === currentSlide && (
                     <motion.div
-                      className="absolute inset-0 w-12 h-1 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full"
+                      className="absolute inset-0 w-12 h-1 rounded-full bg-gradient-to-r from-pink-500 to-purple-500"
                       layoutId="activeSlide"
                       transition={{ duration: 0.3 }}
                     />
@@ -438,7 +438,7 @@ const HeroBanner = () => {
               ))}
             </div>
 
-            <div className="text-white text-sm font-medium bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/30">
+            <div className="px-3 py-1 text-sm font-medium text-white border rounded-full bg-white/20 backdrop-blur-sm border-white/30">
               {currentSlide + 1} / {heroBanners.length}
             </div>
           </div>
@@ -447,7 +447,7 @@ const HeroBanner = () => {
 
       {/* Scroll Indicator */}
       <motion.div
-        className="absolute bottom-8 right-8 text-white"
+        className="absolute text-white bottom-8 right-8"
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
       >

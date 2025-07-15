@@ -120,7 +120,13 @@ const initialState = {
   banners: [],
   heroBanners: [],
   promoBanners: [],
-  loading: false,
+  loadingAll: false,
+  loadingHero: false,
+  loadingPromo: false,
+  loadingCreate: false,
+  loadingUpdate: false,
+  loadingDelete: false,
+  loadingToggle: false,
   error: null,
   success: null,
 };
@@ -138,54 +144,69 @@ const bannerSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Fetch all banners
-      .addCase(fetchAllBanners.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(fetchAllBanners.pending, (state) => {
+        state.loadingAll = true;
+        state.error = null;
+      })
       .addCase(fetchAllBanners.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingAll = false;
         state.banners = action.payload.banners;
       })
       .addCase(fetchAllBanners.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingAll = false;
         state.error = action.payload;
       })
 
       // Fetch hero banners
-      .addCase(fetchHeroBanners.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(fetchHeroBanners.pending, (state) => {
+        state.loadingHero = true;
+        state.error = null;
+      })
       .addCase(fetchHeroBanners.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingHero = false;
         state.heroBanners = action.payload.banners;
       })
       .addCase(fetchHeroBanners.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingHero = false;
         state.error = action.payload;
       })
 
       // Fetch promo banners
-      .addCase(fetchPromoBanners.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(fetchPromoBanners.pending, (state) => {
+        state.loadingPromo = true;
+        state.error = null;
+      })
       .addCase(fetchPromoBanners.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingPromo = false;
         state.promoBanners = action.payload.banners;
       })
       .addCase(fetchPromoBanners.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingPromo = false;
         state.error = action.payload;
       })
 
       // Create banner
-      .addCase(createBanner.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(createBanner.pending, (state) => {
+        state.loadingCreate = true;
+        state.error = null;
+      })
       .addCase(createBanner.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingCreate = false;
         state.banners.unshift(action.payload.banner);
         state.success = action.payload.message;
       })
       .addCase(createBanner.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingCreate = false;
         state.error = action.payload;
       })
 
       // Update banner
-      .addCase(updateBanner.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(updateBanner.pending, (state) => {
+        state.loadingUpdate = true;
+        state.error = null;
+      })
       .addCase(updateBanner.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingUpdate = false;
         const updatedBanner = action.payload.banner;
         const index = state.banners.findIndex((b) => b._id === updatedBanner._id);
         if (index !== -1) {
@@ -194,28 +215,34 @@ const bannerSlice = createSlice({
         state.success = action.payload.message;
       })
       .addCase(updateBanner.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingUpdate = false;
         state.error = action.payload;
       })
 
       // Delete banner
-      .addCase(deleteBanner.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(deleteBanner.pending, (state) => {
+        state.loadingDelete = true;
+        state.error = null;
+      })
       .addCase(deleteBanner.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingDelete = false;
         state.banners = state.banners.filter((b) => b._id !== action.payload);
         state.heroBanners = state.heroBanners.filter((b) => b._id !== action.payload);
         state.promoBanners = state.promoBanners.filter((b) => b._id !== action.payload);
         state.success = "Banner deleted successfully";
       })
       .addCase(deleteBanner.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingDelete = false;
         state.error = action.payload;
       })
 
       // Toggle banner status
-      .addCase(toggleBannerStatus.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(toggleBannerStatus.pending, (state) => {
+        state.loadingToggle = true;
+        state.error = null;
+      })
       .addCase(toggleBannerStatus.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingToggle = false;
         const updatedBanner = action.payload.banner;
         const updateInArray = (arr) => {
           const index = arr.findIndex((b) => b._id === updatedBanner._id);
@@ -227,7 +254,7 @@ const bannerSlice = createSlice({
         state.success = action.payload.message;
       })
       .addCase(toggleBannerStatus.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingToggle = false;
         state.error = action.payload;
       });
   },

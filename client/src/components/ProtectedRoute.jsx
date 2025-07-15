@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import React, { useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import { Navigate, useLocation } from "react-router-dom"
 import { checkAuth } from "../store/slices/authSlice"

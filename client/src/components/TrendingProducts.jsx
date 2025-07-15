@@ -1,68 +1,102 @@
 "use client"
 
-import { useSelector } from "react-redux"
-import { motion } from "framer-motion"
-import { ChevronLeft, ChevronRight, Heart, ShoppingBag, Star } from "lucide-react"
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { useDispatch } from "react-redux"
-import { addToCart } from "../store/slices/cartSlice"
-import { addToWishlist, removeFromWishlist } from "../store/slices/wishlistSlice"
-import toast from "react-hot-toast"
+import { useSelector, useDispatch } from "react-redux";
+import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Heart, ShoppingBag, Star } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { addToCart } from "../store/slices/cartSlice";
+import { addToWishlist, removeFromWishlist } from "../store/slices/wishlistSlice";
+import toast from "react-hot-toast";
+import { fetchTrendingProducts } from "../store/slices/productSlice"; // Assuming the fetch action exists.
 
 const TrendingProducts = () => {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const dispatch = useDispatch()
+  // Redux dispatch hook
+  const dispatch = useDispatch();
 
-  const { trendingProducts, isLoading } = useSelector((state) => state.products)
-  const { items: wishlistItems } = useSelector((state) => state.wishlist)
-  const { user } = useSelector((state) => state.auth)
+  // Selectors to get the trending products, wishlist items, and user state
+  const { trendingProducts, isLoading, error } = useSelector((state) => state.products);
+  const { items: wishlistItems } = useSelector((state) => state.wishlist);
+  const { user } = useSelector((state) => state.auth);
 
-  const itemsPerView = 4
-  const maxIndex = Math.max(0, trendingProducts.length - itemsPerView)
+  // State for tracking the current index in the carousel
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // Dynamic items per view based on screen size
+  const [itemsPerView, setItemsPerView] = useState(4);
+  
+  // Calculate max index based on items per view and the number of trending products
+  const maxIndex = Math.max(0, trendingProducts.length - itemsPerView);
 
+  // Handle resizing and updating the number of items per view based on screen size
+  const getItemsPerView = () => {
+    if (window.innerWidth < 768) return 2;  // Mobile
+    if (window.innerWidth < 1024) return 3; // Tablet
+    return 4; // Desktop
+  };
+
+  useEffect(() => {
+    const handleResize = () => setItemsPerView(getItemsPerView());
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load trending products.');
+    } else if (!isLoading && !trendingProducts.length) {
+      dispatch(fetchTrendingProducts()); // Fetch trending products if not available
+    }
+  }, [dispatch, isLoading, error, trendingProducts.length]);
+
+  // Functions to handle slide navigation
   const nextSlide = () => {
-    setCurrentIndex((prev) => Math.min(prev + 1, maxIndex))
-  }
+    if (currentIndex < maxIndex) {
+      setCurrentIndex((prev) => prev + 1);
+    }
+  };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => Math.max(prev - 1, 0))
-  }
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+    }
+  };
 
+  // Add product to cart
   const handleAddToCart = (product) => {
     if (!user) {
-      toast.error("Please login to add items to cart")
-      return
+      toast.error("Please login to add items to cart");
+      return;
     }
-    dispatch(
-      addToCart({
-        product: product._id,
-        quantity: 1,
-        price: product.price,
-        name: product.name,
-        image: product.images[0]?.url,
-      }),
-    )
-    toast.success("Added to cart!")
-  }
+    dispatch(addToCart({
+      product: product._id,
+      quantity: 1,
+      price: product.price,
+      name: product.name,
+      image: product.images[0]?.url,
+    }));
+    toast.success("Added to cart!");
+  };
 
+  // Toggle product in wishlist
   const handleWishlistToggle = (product) => {
     if (!user) {
-      toast.error("Please login to add items to wishlist")
-      return
+      toast.error("Please login to add items to wishlist");
+      return;
     }
 
-    const isInWishlist = wishlistItems.some((item) => item._id === product._id)
+    const isInWishlist = wishlistItems.some((item) => item._id === product._id);
 
     if (isInWishlist) {
-      dispatch(removeFromWishlist(product._id))
-      toast.success("Removed from wishlist")
+      dispatch(removeFromWishlist(product._id));
+      toast.success("Removed from wishlist");
     } else {
-      dispatch(addToWishlist(product))
-      toast.success("Added to wishlist!")
+      dispatch(addToWishlist(product));
+      toast.success("Added to wishlist!");
     }
-  }
+  };
 
+  // Loader and Error State
   if (isLoading) {
     return (
       <section className="py-16 bg-white">
@@ -78,10 +112,10 @@ const TrendingProducts = () => {
           </div>
         </div>
       </section>
-    )
+    );
   }
 
-  if (!trendingProducts.length) {
+  if (!trendingProducts.length && !isLoading) {
     return (
       <section className="py-16 bg-white">
         <div className="container px-4 mx-auto text-center">
@@ -89,7 +123,7 @@ const TrendingProducts = () => {
           <p className="text-lg text-gray-600">No trending products available at the moment.</p>
         </div>
       </section>
-    )
+    );
   }
 
   return (
@@ -132,7 +166,7 @@ const TrendingProducts = () => {
             }}
           >
             {trendingProducts.map((product, index) => {
-              const isInWishlist = wishlistItems.some((item) => item._id === product._id)
+              const isInWishlist = wishlistItems.some((item) => item._id === product._id);
 
               return (
                 <motion.div
@@ -144,7 +178,6 @@ const TrendingProducts = () => {
                   className="flex-shrink-0 w-full px-3 md:w-1/2 lg:w-1/4"
                 >
                   <div className="relative overflow-hidden transition-shadow duration-300 bg-white shadow-lg group rounded-2xl hover:shadow-xl">
-                    {/* Product Image */}
                     <div className="relative aspect-[3/4] overflow-hidden">
                       <Link to={`/product/${product._id}`}>
                         <img
@@ -154,7 +187,6 @@ const TrendingProducts = () => {
                         />
                       </Link>
 
-                      {/* Badges */}
                       <div className="absolute flex flex-col space-y-2 top-3 left-3">
                         {product.tags.includes("new-arrival") && (
                           <span className="px-2 py-1 text-xs text-white bg-green-500 rounded-full">NEW</span>
@@ -166,23 +198,17 @@ const TrendingProducts = () => {
                         )}
                       </div>
 
-                      {/* Action Buttons */}
                       <div className="absolute flex flex-col space-y-2 transition-opacity duration-300 opacity-0 top-3 right-3 group-hover:opacity-100">
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleWishlistToggle(product)}
-                          className={`p-2 rounded-full shadow-md transition-colors ${
-                            isInWishlist
-                              ? "bg-pink-500 text-white"
-                              : "bg-white text-gray-600 hover:bg-pink-50 hover:text-pink-500"
-                          }`}
+                          className={`p-2 rounded-full shadow-md transition-colors ${isInWishlist ? "bg-pink-500 text-white" : "bg-white text-gray-600 hover:bg-pink-50 hover:text-pink-500"}`}
                         >
                           <Heart className={`w-4 h-4 ${isInWishlist ? "fill-current" : ""}`} />
                         </motion.button>
                       </div>
 
-                      {/* Quick Add Button */}
                       <div className="absolute transition-opacity duration-300 opacity-0 bottom-3 left-3 right-3 group-hover:opacity-100">
                         <button
                           onClick={() => handleAddToCart(product)}
@@ -194,7 +220,6 @@ const TrendingProducts = () => {
                       </div>
                     </div>
 
-                    {/* Product Info */}
                     <div className="p-4">
                       <Link to={`/product/${product._id}`}>
                         <h3 className="mb-2 font-semibold text-gray-800 transition-colors line-clamp-2 hover:text-pink-600">
@@ -202,24 +227,18 @@ const TrendingProducts = () => {
                         </h3>
                       </Link>
 
-                      {/* Rating */}
                       <div className="flex items-center mb-2">
                         <div className="flex items-center">
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`w-4 h-4 ${
-                                i < Math.floor(product.rating?.average || 0)
-                                  ? "text-yellow-400 fill-current"
-                                  : "text-gray-300"
-                              }`}
+                              className={`w-4 h-4 ${i < Math.floor(product.rating?.average || 0) ? "text-yellow-400 fill-current" : "text-gray-300"}`}
                             />
                           ))}
                         </div>
                         <span className="ml-2 text-sm text-gray-500">({product.rating?.count || 0})</span>
                       </div>
 
-                      {/* Price */}
                       <div className="flex items-center space-x-2">
                         <span className="text-lg font-bold text-gray-800">₹{product.price}</span>
                         {product.originalPrice && product.originalPrice > product.price && (
@@ -229,12 +248,11 @@ const TrendingProducts = () => {
                     </div>
                   </div>
                 </motion.div>
-              )
+              );
             })}
           </motion.div>
         </div>
 
-        {/* Mobile Navigation */}
         <div className="flex justify-center mt-6 space-x-2 md:hidden">
           <button
             onClick={prevSlide}
@@ -252,7 +270,6 @@ const TrendingProducts = () => {
           </button>
         </div>
 
-        {/* View All Button */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -269,7 +286,7 @@ const TrendingProducts = () => {
         </motion.div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default TrendingProducts
+export default TrendingProducts;

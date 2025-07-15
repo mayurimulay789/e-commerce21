@@ -6,15 +6,15 @@ import LoadingSpinner from './LoadingSpinner'
 
 const NewArrivals = () => {
   const dispatch = useDispatch()
-  const { newArrivals, isLoading } = useSelector((state) => state.products)
+const { newArrivals, isLoadingNewArrivals } = useSelector((state) => state.products);
 
-  useEffect(() => {
-    dispatch(fetchNewArrivals())
-  }, [dispatch])
+ useEffect(() => {
+  dispatch(fetchNewArrivals());
+}, [dispatch]);
 
-  if (isLoading) {
-    return <LoadingSpinner />
-  }
+if (isLoadingNewArrivals) {
+  return <LoadingSpinner />;
+}
 
   return (
     <section className="py-16 bg-gray-50">

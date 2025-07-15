@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
+import React from "react";
 
 const LoadingSpinner = ({ size = "large", message = "Loading..." }) => {
   const sizeClasses = {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import { Star, ThumbsUp, MessageCircle, Filter } from "lucide-react"
 import { fetchProductReviews, createReview, likeReview } from "../store/slices/reviewSlice"

@@ -1,9 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
 import axios from "axios"
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api"
 
-// Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
 })
@@ -17,7 +16,10 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Async thunks
+// ============================
+// Async Thunks
+// ============================
+
 export const fetchCategories = createAsyncThunk("category/fetchCategories", async (_, { rejectWithValue }) => {
   try {
     const response = await api.get("/categories")
@@ -27,9 +29,9 @@ export const fetchCategories = createAsyncThunk("category/fetchCategories", asyn
   }
 })
 
-export const fetchCategoryById = createAsyncThunk("category/fetchCategoryById", async (id, { rejectWithValue }) => {
+export const fetchCategoryBySlug = createAsyncThunk("category/fetchCategoryBySlug", async (slug, { rejectWithValue }) => {
   try {
-    const response = await api.get(`/categories/${id}`)
+    const response = await api.get(`/categories/${slug}`)
     return response.data
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || "Failed to fetch category")
@@ -39,15 +41,11 @@ export const fetchCategoryById = createAsyncThunk("category/fetchCategoryById", 
 export const createCategory = createAsyncThunk("category/createCategory", async (categoryData, { rejectWithValue }) => {
   try {
     const formData = new FormData()
-
-    // Append text fields
     Object.keys(categoryData).forEach((key) => {
       if (key !== "image" && categoryData[key] !== undefined) {
         formData.append(key, categoryData[key])
       }
     })
-
-    // Append image if exists
     if (categoryData.image) {
       formData.append("image", categoryData.image)
     }
@@ -68,15 +66,11 @@ export const updateCategory = createAsyncThunk(
   async ({ id, categoryData }, { rejectWithValue }) => {
     try {
       const formData = new FormData()
-
-      // Append text fields
       Object.keys(categoryData).forEach((key) => {
         if (key !== "image" && categoryData[key] !== undefined) {
           formData.append(key, categoryData[key])
         }
       })
-
-      // Append image if exists
       if (categoryData.image) {
         formData.append("image", categoryData.image)
       }
@@ -90,7 +84,7 @@ export const updateCategory = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update category")
     }
-  },
+  }
 )
 
 export const deleteCategory = createAsyncThunk("category/deleteCategory", async (id, { rejectWithValue }) => {
@@ -102,23 +96,22 @@ export const deleteCategory = createAsyncThunk("category/deleteCategory", async 
   }
 })
 
+// ============================
+// Initial State
+// ============================
+
 const initialState = {
   categories: [],
   currentCategory: null,
   featuredCategories: [],
-  loading: {
-    fetching: false,
-    creating: false,
-    updating: false,
-    deleting: false,
-  },
+  status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
   error: null,
-  success: {
-    categoryCreated: false,
-    categoryUpdated: false,
-    categoryDeleted: false,
-  },
+  successAction: null, // 'created' | 'updated' | 'deleted' | null
 }
+
+// ============================
+// Slice
+// ============================
 
 const categorySlice = createSlice({
   name: "category",
@@ -128,11 +121,7 @@ const categorySlice = createSlice({
       state.error = null
     },
     clearSuccess: (state) => {
-      state.success = {
-        categoryCreated: false,
-        categoryUpdated: false,
-        categoryDeleted: false,
-      }
+      state.successAction = null
     },
     setCurrentCategory: (state, action) => {
       state.currentCategory = action.payload
@@ -143,85 +132,90 @@ const categorySlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Categories
+      // ========== FETCH ALL ==========
       .addCase(fetchCategories.pending, (state) => {
-        state.loading.fetching = true
+        state.status = "loading"
         state.error = null
       })
       .addCase(fetchCategories.fulfilled, (state, action) => {
-        state.loading.fetching = false
+        state.status = "succeeded"
         state.categories = action.payload.categories
-        // Set featured categories (first 6 categories)
         state.featuredCategories = action.payload.categories.slice(0, 6)
       })
       .addCase(fetchCategories.rejected, (state, action) => {
-        state.loading.fetching = false
+        state.status = "failed"
         state.error = action.payload
       })
 
-      // Fetch Category By ID
-      .addCase(fetchCategoryById.pending, (state) => {
-        state.loading.fetching = true
+      // ========== FETCH BY SLUG ==========
+      .addCase(fetchCategoryBySlug.pending, (state) => {
+        state.status = "loading"
         state.error = null
       })
-      .addCase(fetchCategoryById.fulfilled, (state, action) => {
-        state.loading.fetching = false
+      .addCase(fetchCategoryBySlug.fulfilled, (state, action) => {
+        state.status = "succeeded"
         state.currentCategory = action.payload.category
       })
-      .addCase(fetchCategoryById.rejected, (state, action) => {
-        state.loading.fetching = false
+      .addCase(fetchCategoryBySlug.rejected, (state, action) => {
+        state.status = "failed"
         state.error = action.payload
       })
 
-      // Create Category
+      // ========== CREATE ==========
       .addCase(createCategory.pending, (state) => {
-        state.loading.creating = true
+        state.status = "loading"
         state.error = null
       })
       .addCase(createCategory.fulfilled, (state, action) => {
-        state.loading.creating = false
+        state.status = "succeeded"
         state.categories.unshift(action.payload.category)
-        state.success.categoryCreated = true
+        state.successAction = "created"
       })
       .addCase(createCategory.rejected, (state, action) => {
-        state.loading.creating = false
+        state.status = "failed"
         state.error = action.payload
       })
 
-      // Update Category
+      // ========== UPDATE ==========
       .addCase(updateCategory.pending, (state) => {
-        state.loading.updating = true
+        state.status = "loading"
         state.error = null
       })
       .addCase(updateCategory.fulfilled, (state, action) => {
-        state.loading.updating = false
-        const index = state.categories.findIndex((category) => category._id === action.payload.category._id)
+        state.status = "succeeded"
+        const index = state.categories.findIndex((c) => c._id === action.payload.category._id)
         if (index !== -1) {
           state.categories[index] = action.payload.category
         }
-        state.success.categoryUpdated = true
+        state.successAction = "updated"
       })
       .addCase(updateCategory.rejected, (state, action) => {
-        state.loading.updating = false
+        state.status = "failed"
         state.error = action.payload
       })
 
-      // Delete Category
+      // ========== DELETE ==========
       .addCase(deleteCategory.pending, (state) => {
-        state.loading.deleting = true
+        state.status = "loading"
         state.error = null
       })
       .addCase(deleteCategory.fulfilled, (state, action) => {
-        state.loading.deleting = false
-        state.categories = state.categories.filter((category) => category._id !== action.payload)
-        state.success.categoryDeleted = true
+        state.status = "succeeded"
+        state.categories = state.categories.filter((cat) => cat._id !== action.payload)
+        state.successAction = "deleted"
       })
       .addCase(deleteCategory.rejected, (state, action) => {
-        state.loading.deleting = false
+        state.status = "failed"
         state.error = action.payload
       })
   },
 })
 
-export const { clearError, clearSuccess, setCurrentCategory, setFeaturedCategories } = categorySlice.actions
+export const {
+  clearError,
+  clearSuccess,
+  setCurrentCategory,
+  setFeaturedCategories,
+} = categorySlice.actions
+
 export default categorySlice.reducer

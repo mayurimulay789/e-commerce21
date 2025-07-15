@@ -8,14 +8,25 @@ const ProductCard = ({
   product,
   viewMode = "grid",
   isInWishlist = false,
-  onWishlistToggle,
-  onAddToCart,
-  onQuickView,
+  onWishlistToggle = () => {},  // Default to no-op
+  onAddToCart = () => {},  // Default to no-op
+  onQuickView = () => {},  // Default to no-op
 }) => {
   const discountPercentage =
     product.originalPrice && product.originalPrice > product.price
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0
+
+  const stockStatus = product.stock === 0
+    ? "Out of Stock"
+    : product.stock < 5
+    ? `Only ${product.stock} left!`
+    : null
+
+  const badgeClasses = "px-2 py-1 text-xs text-white rounded-full"
+  const quickActionButton = "p-2 text-gray-600 transition-colors bg-white rounded-full shadow-md hover:bg-orange-50 hover:text-orange-500"
+
+  const commonButtonClasses = "flex items-center px-4 py-2 space-x-2 text-white transition-colors rounded-lg disabled:cursor-not-allowed"
 
   if (viewMode === "list") {
     return (
@@ -37,10 +48,10 @@ const ProductCard = ({
             {/* Badges */}
             <div className="absolute flex flex-col space-y-2 top-3 left-3">
               {product.tags?.includes("new-arrival") && (
-                <span className="px-2 py-1 text-xs text-white bg-green-500 rounded-full">NEW</span>
+                <span className={`bg-green-500 ${badgeClasses}`}>NEW</span>
               )}
               {discountPercentage > 0 && (
-                <span className="px-2 py-1 text-xs text-white bg-orange-500 rounded-full">-{discountPercentage}%</span>
+                <span className={`bg-orange-500 ${badgeClasses}`}>-{discountPercentage}%</span>
               )}
             </div>
 
@@ -50,11 +61,7 @@ const ProductCard = ({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onWishlistToggle}
-                className={`p-2 rounded-full shadow-md transition-colors ${
-                  isInWishlist
-                    ? "bg-orange-500 text-white"
-                    : "bg-white text-gray-600 hover:bg-orange-50 hover:text-orange-500"
-                }`}
+                className={`p-2 rounded-full shadow-md transition-colors ${isInWishlist ? "bg-orange-500 text-white" : "bg-white text-gray-600 hover:bg-orange-50 hover:text-orange-500"}`}
               >
                 <Heart className={`w-4 h-4 ${isInWishlist ? "fill-current" : ""}`} />
               </motion.button>
@@ -63,7 +70,7 @@ const ProductCard = ({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onQuickView}
-                className="p-2 text-gray-600 transition-colors bg-white rounded-full shadow-md hover:bg-orange-50 hover:text-orange-500"
+                className={quickActionButton}
               >
                 <Eye className="w-4 h-4" />
               </motion.button>
@@ -90,9 +97,7 @@ const ProductCard = ({
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.floor(product.rating.average) ? "text-yellow-400 fill-current" : "text-gray-300"
-                      }`}
+                      className={`w-4 h-4 ${i < Math.floor(product.rating.average) ? "text-yellow-400 fill-current" : "text-gray-300"}`}
                     />
                   ))}
                 </div>
@@ -115,7 +120,7 @@ const ProductCard = ({
               <button
                 onClick={onAddToCart}
                 disabled={product.stock === 0}
-                className="flex items-center px-4 py-2 space-x-2 text-white transition-colors bg-orange-500 rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className={`${commonButtonClasses} bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300`}
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>{product.stock === 0 ? "Out of Stock" : "Add to Cart"}</span>
@@ -123,8 +128,8 @@ const ProductCard = ({
             </div>
 
             {/* Stock Status */}
-            {product.stock > 0 && product.stock < 5 && (
-              <p className="mt-2 text-sm text-orange-600">Only {product.stock} left in stock!</p>
+            {stockStatus && (
+              <p className="mt-2 text-sm text-orange-600">{stockStatus}</p>
             )}
           </div>
         </div>
@@ -151,10 +156,10 @@ const ProductCard = ({
         {/* Badges */}
         <div className="absolute flex flex-col space-y-2 top-3 left-3">
           {product.tags?.includes("new-arrival") && (
-            <span className="px-2 py-1 text-xs text-white bg-green-500 rounded-full">NEW</span>
+            <span className={`bg-green-500 ${badgeClasses}`}>NEW</span>
           )}
           {discountPercentage > 0 && (
-            <span className="px-2 py-1 text-xs text-white bg-orange-500 rounded-full">-{discountPercentage}%</span>
+            <span className={`bg-orange-500 ${badgeClasses}`}>-{discountPercentage}%</span>
           )}
         </div>
 
@@ -164,11 +169,7 @@ const ProductCard = ({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={onWishlistToggle}
-            className={`p-2 rounded-full shadow-md transition-colors ${
-              isInWishlist
-                ? "bg-orange-500 text-white"
-                : "bg-white text-gray-600 hover:bg-orange-50 hover:text-orange-500"
-            }`}
+            className={`p-2 rounded-full shadow-md transition-colors ${isInWishlist ? "bg-orange-500 text-white" : "bg-white text-gray-600 hover:bg-orange-50 hover:text-orange-500"}`}
           >
             <Heart className={`w-4 h-4 ${isInWishlist ? "fill-current" : ""}`} />
           </motion.button>
@@ -177,7 +178,7 @@ const ProductCard = ({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={onQuickView}
-            className="p-2 text-gray-600 transition-colors bg-white rounded-full shadow-md hover:bg-orange-50 hover:text-orange-500"
+            className={quickActionButton}
           >
             <Eye className="w-4 h-4" />
           </motion.button>
@@ -188,7 +189,7 @@ const ProductCard = ({
           <button
             onClick={onAddToCart}
             disabled={product.stock === 0}
-            className="flex items-center justify-center w-full py-2 space-x-2 text-white transition-colors bg-orange-500 rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className={`${commonButtonClasses} bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300`}
           >
             <ShoppingBag className="w-4 h-4" />
             <span>{product.stock === 0 ? "Out of Stock" : "Quick Add"}</span>
@@ -214,9 +215,7 @@ const ProductCard = ({
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-4 h-4 ${
-                    i < Math.floor(product.rating.average) ? "text-yellow-400 fill-current" : "text-gray-300"
-                  }`}
+                  className={`w-4 h-4 ${i < Math.floor(product.rating.average) ? "text-yellow-400 fill-current" : "text-gray-300"}`}
                 />
               ))}
             </div>
@@ -233,11 +232,11 @@ const ProductCard = ({
         </div>
 
         {/* Stock Status */}
-        {product.stock === 0 ? (
-          <div className="text-sm font-medium text-red-600">Out of Stock</div>
-        ) : product.stock < 5 ? (
-          <div className="text-sm text-orange-600">Only {product.stock} left!</div>
-        ) : null}
+        {stockStatus && (
+          <div className={`text-sm ${product.stock === 0 ? "text-red-600" : "text-orange-600"}`}>
+            {stockStatus}
+          </div>
+        )}
       </div>
     </motion.div>
   )

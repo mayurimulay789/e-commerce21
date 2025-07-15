@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import { motion } from "framer-motion"
 import { ArrowLeft, Upload, X, Package, AlertCircle, CheckCircle } from "lucide-react"
