@@ -3,7 +3,7 @@ import { Bars3Icon, BellIcon } from "@heroicons/react/24/outline"
 
 const AdminHeader = ({ setSidebarOpen, pageTitle, user }) => {
   return (
-    <div className="sticky top-0 z-40 flex items-center h-16 px-4 bg-white border-b border-gray-200 shadow-sm shrink-0 gap-x-4 sm:gap-x-6 sm:px-6 lg:px-8">
+    <div className="sticky z-40 flex items-center h-16 px-4 bg-white border-b border-gray-200 shadow-sm top-10 shrink-0 gap-x-4 sm:gap-x-6 sm:px-6 lg:px-8">
       {/* Mobile menu button */}
       <button type="button" className="-m-2.5 p-2.5 text-gray-700 lg:hidden" onClick={() => setSidebarOpen(true)}>
         <span className="sr-only">Open sidebar</span>

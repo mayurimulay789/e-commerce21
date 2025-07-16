@@ -1,17 +1,20 @@
 "use client"
-
-import React, { useState } from "react"
-import { motion } from "framer-motion"
-import { ChevronDown, ChevronUp, X } from "lucide-react"
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { ChevronDown, X, Tag, DollarSign, Star } from "lucide-react" // Import Star icon
 
 const ProductFilters = ({ filters, categories, onFilterChange, onClearFilters, onClose }) => {
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
     price: true,
-    rating: false,
+    rating: true, // Keep rating expanded by default for better visibility
   })
-
   const [selectedRatings, setSelectedRatings] = useState(filters.ratings || [])
+
+  // Update local rating state when filters prop changes from parent
+  useEffect(() => {
+    setSelectedRatings(filters.ratings || [])
+  }, [filters.ratings])
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -22,17 +25,17 @@ const ProductFilters = ({ filters, categories, onFilterChange, onClearFilters, o
 
   const handlePriceChange = (field, value) => {
     onFilterChange({
+      ...filters, // Ensure other filters are preserved
       [field]: value,
     })
   }
 
   const handleRatingChange = (rating) => {
-    setSelectedRatings((prev) =>
-      prev.includes(rating)
-        ? prev.filter((r) => r !== rating)
-        : [...prev, rating]
-    )
-    onFilterChange({ ratings: selectedRatings })
+    setSelectedRatings((prev) => {
+      const newRatings = prev.includes(rating) ? prev.filter((r) => r !== rating) : [...prev, rating]
+      onFilterChange({ ratings: newRatings }) // Pass the new array to parent
+      return newRatings
+    })
   }
 
   const priceRanges = [
@@ -42,17 +45,16 @@ const ProductFilters = ({ filters, categories, onFilterChange, onClearFilters, o
     { label: "₹2000 - ₹5000", min: "2000", max: "5000" },
     { label: "Above ₹5000", min: "5000", max: "" },
   ]
-
-  const ratings = [4, 3, 2, 1]
+  const ratings = [4, 3, 2, 1] // Ratings for "X Stars & Up"
 
   return (
-    <div className="p-6 space-y-6 bg-white rounded-lg shadow-sm">
+    <div className="p-6 space-y-6 bg-white border border-gray-100 shadow-lg rounded-xl">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-800">Filters</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Filters</h2>
         {onClose && (
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 md:hidden">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-2 transition-colors rounded-full hover:bg-gray-100">
+            <X className="w-6 h-6 text-gray-600" />
           </button>
         )}
       </div>
@@ -60,162 +62,190 @@ const ProductFilters = ({ filters, categories, onFilterChange, onClearFilters, o
       {/* Clear All Filters */}
       <button
         onClick={onClearFilters}
-        className="w-full py-2 text-sm font-medium text-pink-600 transition-colors border border-pink-200 rounded-lg hover:text-pink-700 hover:bg-pink-50"
+        className="w-full py-2 text-sm font-medium transition-colors border rounded-lg shadow-sm text-ksauni-red border-ksauni-red/50 hover:text-white hover:bg-ksauni-red"
       >
         Clear All Filters
       </button>
 
       {/* Categories */}
-      <div className="pb-4 border-b">
+      <div className="pb-4 border-b border-gray-100">
         <button
           onClick={() => toggleSection("categories")}
-          className="flex items-center justify-between w-full text-left"
+          className="flex items-center justify-between w-full py-2 text-left"
         >
-          <h3 className="text-lg font-medium text-gray-800">Categories</h3>
-          {expandedSections.categories ? (
-            <ChevronUp className="w-5 h-5 text-gray-500" />
-          ) : (
+          <h3 className="flex items-center text-lg font-semibold text-gray-800">
+            <Tag className="w-5 h-5 mr-2 text-ksauni-red" />
+            Categories
+          </h3>
+          <motion.div animate={{ rotate: expandedSections.categories ? 180 : 0 }} transition={{ duration: 0.2 }}>
             <ChevronDown className="w-5 h-5 text-gray-500" />
-          )}
+          </motion.div>
         </button>
-
-        <motion.div
-          initial={false}
-          animate={{ height: expandedSections.categories ? "auto" : 0 }}
-          className="overflow-hidden"
-        >
-          <div className="mt-3 space-y-2">
-            <label className="flex items-center">
-              <input
-                type="radio"
-                name="category"
-                checked={!filters.category}
-                onChange={() => onFilterChange({ category: "" })}
-                className="mr-3 text-pink-600 focus:ring-pink-500"
-              />
-              <span className="text-gray-700">All Categories</span>
-            </label>
-            {categories.map((category) => (
-              <label key={category._id} className="flex items-center">
-                <input
-                  type="radio"
-                  name="category"
-                  checked={filters.category === category._id}
-                  onChange={() => onFilterChange({ category: category._id })}
-                  className="mr-3 text-pink-600 focus:ring-pink-500"
-                />
-                <span className="text-gray-700">{category.name}</span>
-                <span className="ml-auto text-sm text-gray-500">({category.productCount || 0})</span>
-              </label>
-            ))}
-          </div>
-        </motion.div>
+        <AnimatePresence>
+          {expandedSections.categories && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 space-y-2">
+                <label className="flex items-center text-gray-700 transition-colors cursor-pointer hover:text-ksauni-red">
+                  <input
+                    type="radio"
+                    name="category"
+                    checked={!filters.category}
+                    onChange={() => onFilterChange({ category: "" })}
+                    className="w-4 h-4 border-gray-300 rounded text-ksauni-red focus:ring-ksauni-red"
+                  />
+                  <span className="ml-2">All Categories</span>
+                </label>
+                {categories.map((category) => (
+                  <label
+                    key={category._id}
+                    className="flex items-center text-gray-700 transition-colors cursor-pointer hover:text-ksauni-red"
+                  >
+                    <input
+                      type="radio"
+                      name="category"
+                      checked={filters.category === category._id}
+                      onChange={() => onFilterChange({ category: category._id })}
+                      className="w-4 h-4 border-gray-300 rounded text-ksauni-red focus:ring-ksauni-red"
+                    />
+                    <span className="ml-2">{category.name}</span>
+                    <span className="ml-auto text-sm text-gray-500">({category.productCount || 0})</span>
+                  </label>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Price Range */}
-      <div className="pb-4 border-b">
-        <button onClick={() => toggleSection("price")} className="flex items-center justify-between w-full text-left">
-          <h3 className="text-lg font-medium text-gray-800">Price Range</h3>
-          {expandedSections.price ? (
-            <ChevronUp className="w-5 h-5 text-gray-500" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-gray-500" />
-          )}
-        </button>
-
-        <motion.div
-          initial={false}
-          animate={{ height: expandedSections.price ? "auto" : 0 }}
-          className="overflow-hidden"
+      <div className="pb-4 border-b border-gray-100">
+        <button
+          onClick={() => toggleSection("price")}
+          className="flex items-center justify-between w-full py-2 text-left"
         >
-          <div className="mt-3 space-y-3">
-            {/* Custom Price Range */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block mb-1 text-sm text-gray-600">Min Price</label>
-                <input
-                  type="number"
-                  placeholder="₹0"
-                  value={filters.minPrice || ""}
-                  onChange={(e) => handlePriceChange("minPrice", e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                />
+          <h3 className="flex items-center text-lg font-semibold text-gray-800">
+            <DollarSign className="w-5 h-5 mr-2 text-ksauni-red" />
+            Price Range
+          </h3>
+          <motion.div animate={{ rotate: expandedSections.price ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown className="w-5 h-5 text-gray-500" />
+          </motion.div>
+        </button>
+        <AnimatePresence>
+          {expandedSections.price && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 space-y-3">
+                {/* Custom Price Range */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block mb-1 text-sm text-gray-600">Min Price</label>
+                    <input
+                      type="number"
+                      placeholder="₹0"
+                      value={filters.minPrice || ""}
+                      onChange={(e) => handlePriceChange("minPrice", e.target.value)}
+                      className="w-full px-3 py-2 text-sm transition-colors border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-ksauni-red focus:border-ksauni-red"
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-sm text-gray-600">Max Price</label>
+                    <input
+                      type="number"
+                      placeholder="₹∞"
+                      value={filters.maxPrice || ""}
+                      onChange={(e) => handlePriceChange("maxPrice", e.target.value)}
+                      className="w-full px-3 py-2 text-sm transition-colors border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-ksauni-red focus:border-ksauni-red"
+                    />
+                  </div>
+                </div>
+                {/* Quick Price Ranges */}
+                <div className="space-y-2">
+                  {priceRanges.map((range, index) => (
+                    <label
+                      key={index}
+                      className="flex items-center text-gray-700 transition-colors cursor-pointer hover:text-ksauni-red"
+                    >
+                      <input
+                        type="radio"
+                        name="priceRange"
+                        checked={filters.minPrice === range.min && filters.maxPrice === range.max}
+                        onChange={() => onFilterChange({ minPrice: range.min, maxPrice: range.max })}
+                        className="w-4 h-4 border-gray-300 rounded text-ksauni-red focus:ring-ksauni-red"
+                      />
+                      <span className="ml-2">{range.label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-              <div>
-                <label className="block mb-1 text-sm text-gray-600">Max Price</label>
-                <input
-                  type="number"
-                  placeholder="₹∞"
-                  value={filters.maxPrice || ""}
-                  onChange={(e) => handlePriceChange("maxPrice", e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                />
-              </div>
-            </div>
-
-            {/* Quick Price Ranges */}
-            <div className="space-y-2">
-              {priceRanges.map((range, index) => (
-                <label key={index} className="flex items-center">
-                  <input
-                    type="radio"
-                    name="priceRange"
-                    checked={filters.minPrice === range.min && filters.maxPrice === range.max}
-                    onChange={() => onFilterChange({ minPrice: range.min, maxPrice: range.max })}
-                    className="mr-3 text-pink-600 focus:ring-pink-500"
-                  />
-                  <span className="text-gray-700">{range.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Rating */}
       <div>
-        <button onClick={() => toggleSection("rating")} className="flex items-center justify-between w-full text-left">
-          <h3 className="text-lg font-medium text-gray-800">Customer Rating</h3>
-          {expandedSections.rating ? (
-            <ChevronUp className="w-5 h-5 text-gray-500" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-gray-500" />
-          )}
-        </button>
-
-        <motion.div
-          initial={false}
-          animate={{ height: expandedSections.rating ? "auto" : 0 }}
-          className="overflow-hidden"
+        <button
+          onClick={() => toggleSection("rating")}
+          className="flex items-center justify-between w-full py-2 text-left"
         >
-          <div className="mt-3 space-y-2">
-            {ratings.map((rating) => (
-              <label key={rating} className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={selectedRatings.includes(rating)}
-                  onChange={() => handleRatingChange(rating)}
-                  className="mr-3 text-pink-600 focus:ring-pink-500"
-                />
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <svg
-                      key={i}
-                      className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                  <span className="ml-2 text-gray-700">& Up</span>
-                </div>
-              </label>
-            ))}
-          </div>
-        </motion.div>
+          <h3 className="flex items-center text-lg font-semibold text-gray-800">
+            <Star className="w-5 h-5 mr-2 text-ksauni-red" />
+            Customer Rating
+          </h3>
+          <motion.div animate={{ rotate: expandedSections.rating ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown className="w-5 h-5 text-gray-500" />
+          </motion.div>
+        </button>
+        <AnimatePresence>
+          {expandedSections.rating && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 space-y-2">
+                {ratings.map((rating) => (
+                  <label
+                    key={rating}
+                    className="flex items-center text-gray-700 transition-colors cursor-pointer hover:text-ksauni-red"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedRatings.includes(rating)}
+                      onChange={() => handleRatingChange(rating)}
+                      className="w-4 h-4 border-gray-300 rounded text-ksauni-red focus:ring-ksauni-red"
+                    />
+                    <div className="flex items-center ml-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                        />
+                      ))}
+                      <span className="ml-2 text-gray-700">& Up</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
 }
-
-export default ProductFilters;
+export default ProductFilters
