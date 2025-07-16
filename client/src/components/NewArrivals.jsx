@@ -31,10 +31,11 @@ if (isLoadingNewArrivals) {
             <div key={product._id} className="relative overflow-hidden transition-shadow duration-300 bg-white rounded-lg shadow-md group hover:shadow-xl">
               <div className="w-full overflow-hidden bg-gray-200 aspect-w-1 aspect-h-1">
                 <img
-                  src={product.images?.[0] || '/placeholder.jpg'}
+                  src={product.images?.[0].url || '/placeholder.jpg'}
                   alt={product.name}
                   className="object-cover object-center w-full h-64 transition-transform duration-300 group-hover:scale-105"
                 />
+
                 {product.isNew && (
                   <div className="absolute px-2 py-1 text-xs font-semibold text-white bg-green-500 rounded top-2 left-2">
                     NEW

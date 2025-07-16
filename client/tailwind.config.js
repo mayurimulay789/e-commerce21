@@ -1,47 +1,62 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+module.exports = {
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        teal: {
-          light: '#81E6D9',
-          DEFAULT: '#38B2AC',
-          dark: '#234E52',
+        "ksauni-red": "rgb(198, 32, 44)",
+        "ksauni-dark-red": "rgb(150, 25, 35)", // A darker shade for gradients/hovers
+        // You can keep or remove the default primary/secondary colors if they are not used elsewhere
+        primary: {
+          50: "#eff6ff",
+          100: "#dbeafe",
+          200: "#bfdbfe",
+          300: "#93c5fd",
+          400: "#60a5fa",
+          500: "#3b82f6",
+          600: "#2563eb",
+          700: "#1d4ed8",
+          800: "#1e40af",
+          900: "#1e3a8a",
         },
-        // Optional: integrating your CSS variables as Tailwind colors
-        background: 'hsl(var(--background) / <alpha-value>)',
-        foreground: 'hsl(var(--foreground) / <alpha-value>)',
-        card: 'hsl(var(--card) / <alpha-value>)',
-        'card-foreground': 'hsl(var(--card-foreground) / <alpha-value>)',
-        primary: 'hsl(var(--primary) / <alpha-value>)',
-        'primary-foreground': 'hsl(var(--primary-foreground) / <alpha-value>)',
-        secondary: 'hsl(var(--secondary) / <alpha-value>)',
-        'secondary-foreground': 'hsl(var(--secondary-foreground) / <alpha-value>)',
-        border: 'hsl(var(--border) / <alpha-value>)',
+        secondary: {
+          50: "#f8fafc",
+          100: "#f1f5f9",
+          200: "#e2e8f0",
+          300: "#cbd5e1",
+          400: "#94a3b8",
+          500: "#64748b",
+          600: "#475569",
+          700: "#334155",
+          800: "#1e293b",
+          900: "#0f172a",
+        },
       },
-      borderColor: {
-        DEFAULT: 'hsl(var(--border) / <alpha-value>)',
+      fontFamily: {
+        sans: ["Inter", "ui-sans-serif", "system-ui"],
+        serif: ["ui-serif", "Georgia"],
+        mono: ["ui-monospace", "SFMono-Regular"],
       },
-      backgroundColor: {
-        background: 'hsl(var(--background) / <alpha-value>)',
-        card: 'hsl(var(--card) / <alpha-value>)',
-        primary: 'hsl(var(--primary) / <alpha-value>)',
-        secondary: 'hsl(var(--secondary) / <alpha-value>)',
-      },
-      textColor: {
-        foreground: 'hsl(var(--foreground) / <alpha-value>)',
-        'card-foreground': 'hsl(var(--card-foreground) / <alpha-value>)',
-        'primary-foreground': 'hsl(var(--primary-foreground) / <alpha-value>)',
-        'secondary-foreground': 'hsl(var(--secondary-foreground) / <alpha-value>)',
+      spacing: {
+        18: "4.5rem",
+        88: "22rem",
+        128: "32rem",
       },
       borderRadius: {
-        DEFAULT: 'var(--radius)',
+        "4xl": "2rem",
+      },
+      boxShadow: {
+        "xl-colored": "0 20px 25px -5px rgba(79, 70, 229, 0.1), 0 10px 10px -5px rgba(79, 70, 229, 0.04)",
+        "inner-lg": "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)",
+      },
+      backdropBlur: {
+        xs: "2px",
+      },
+      zIndex: {
+        60: "60",
+        70: "70",
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography"), require("@tailwindcss/aspect-ratio")],
 }

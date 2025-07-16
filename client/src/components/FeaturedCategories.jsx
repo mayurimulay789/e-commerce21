@@ -39,8 +39,8 @@ const FeaturedCategories = () => {
             >
               <div className="bg-gray-200 aspect-w-16 aspect-h-9">
                 <img
-                  src={category.image || "/placeholder.jpg"}
-                  alt={category.name}
+                  src={category.image.url || "/placeholder.jpg"}
+                  alt={category.image.alt }
                   className="object-cover object-center w-full h-64 transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 transition-opacity duration-300 bg-black bg-opacity-40 group-hover:bg-opacity-50" />

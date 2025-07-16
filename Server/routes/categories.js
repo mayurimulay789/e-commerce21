@@ -17,10 +17,8 @@ router.get("/", getCategories);
 router.get("/:slug", getCategoryBySlug);
 
 // Admin-only routes
-// Admin-only routes
-router.post("/", adminAuth, upload.single("image"), createCategory);
+router.post("/categories", adminAuth, upload.single("image"), createCategory);
 router.put("/:id", protect, adminAuth, upload.single("image"), updateCategory);
 router.delete("/:id", protect, adminAuth, deleteCategory);
-
 
 module.exports = router;
