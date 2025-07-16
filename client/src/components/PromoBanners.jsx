@@ -59,9 +59,12 @@ const PromoBanners = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 * Object.keys(timeLeft).indexOf(interval) }}
-        className="flex flex-col items-center justify-center w-20 h-20 p-2 bg-white rounded-lg shadow-md"
+        className="flex flex-col items-center justify-center w-16 h-16 p-2 bg-white border border-gray-100 rounded-lg shadow-md sm:w-20 sm:h-20" // Responsive size, added border
       >
-        <span className="text-2xl font-bold text-gray-800">{String(timeLeft[interval]).padStart(2, "0")}</span>
+        <span className="text-xl font-bold text-gray-800 sm:text-2xl">
+          {String(timeLeft[interval]).padStart(2, "0")}
+        </span>{" "}
+        {/* Responsive font size */}
         <span className="text-xs text-gray-500 uppercase">{interval}</span>
       </motion.div>,
     )
@@ -108,29 +111,37 @@ const PromoBanners = () => {
         <div className="grid items-center grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Left Section: Deal Details and Countdown */}
           <div className="space-y-6 text-center lg:text-left">
-            <motion.h2 variants={itemVariants} className="text-5xl font-extrabold leading-tight text-gray-900">
+            <motion.h2
+              variants={itemVariants}
+              className="text-4xl font-extrabold leading-tight text-gray-900 sm:text-5xl"
+            >
               {bannerToDisplay.title}
             </motion.h2>
             {bannerToDisplay.subtitle && (
               <motion.p
                 variants={itemVariants}
-                className="text-lg font-semibold tracking-wide uppercase text-ksauni-red"
+                className="text-base font-semibold tracking-wide uppercase sm:text-lg text-ksauni-red"
               >
                 {bannerToDisplay.subtitle}
               </motion.p>
             )}
             {bannerToDisplay.description && (
-              <motion.p variants={itemVariants} className="max-w-lg mx-auto leading-relaxed text-gray-700 lg:mx-0">
+              <motion.p
+                variants={itemVariants}
+                className="max-w-lg mx-auto text-sm leading-relaxed text-gray-700 sm:text-base lg:mx-0"
+              >
                 {bannerToDisplay.description}
               </motion.p>
             )}
-            <motion.p variants={itemVariants} className="text-sm text-gray-600">
+            <motion.p variants={itemVariants} className="text-xs text-gray-600 sm:text-sm">
               Available until:{" "}
               {new Date(targetDate).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}
             </motion.p>
 
             {/* Countdown Timer */}
-            <div className="flex justify-center mt-8 space-x-4 lg:justify-start">
+            <div className="flex justify-center mt-8 space-x-2 lg:justify-start sm:space-x-4">
+              {" "}
+              {/* Responsive spacing */}
               {timerComponents.length ? (
                 timerComponents
               ) : (
@@ -148,7 +159,7 @@ const PromoBanners = () => {
             <motion.div variants={itemVariants} className="pt-4">
               <Link
                 to={bannerToDisplay.buttonLink || "/products"}
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white transition-colors duration-300 rounded-full shadow-lg bg-ksauni-red hover:bg-ksauni-dark-red"
+                className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white transition-colors duration-300 rounded-full shadow-lg sm:px-8 sm:py-4 sm:text-lg bg-ksauni-red hover:bg-ksauni-dark-red" // Responsive padding
               >
                 {bannerToDisplay.buttonText || "Shop Now"}
               </Link>
@@ -161,13 +172,15 @@ const PromoBanners = () => {
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
             viewport={{ once: true }}
-            className="relative flex justify-center lg:justify-end"
+            className="relative flex justify-center w-full lg:justify-end" // Ensure full width for responsiveness
           >
-            <div className="relative overflow-hidden border-4 shadow-2xl rounded-xl border-ksauni-red">
+            <div className="relative w-full max-w-md overflow-hidden border-4 shadow-2xl rounded-xl border-ksauni-red lg:max-w-none">
+              {" "}
+              {/* Responsive width */}
               <img
                 src={bannerToDisplay.image?.url || "/placeholder.svg?height=500&width=500"}
                 alt={bannerToDisplay.title || "Deal of the Day Product"}
-                className="object-cover w-full h-auto max-h-[500px]"
+                className="object-cover w-full h-auto max-h-[400px] sm:max-h-[500px]" // Responsive max height
               />
             </div>
           </motion.div>

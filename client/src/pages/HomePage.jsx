@@ -10,6 +10,7 @@ import TrendingProducts from "../components/TrendingProducts"
 import NewArrivals from "../components/NewArrivals"
 import PromoBanners from "../components/PromoBanners"
 import AboutBrand from "../components/AboutBrand"
+import FeaturedHighlight from '../components/FeaturedHighlight'
 import Testimonials from "../components/Testimonials"
 import Footer from "../components/Footer"
 
@@ -74,6 +75,7 @@ const HomePage = () => {
         <NewArrivals />
         <PromoBanners />
         <AboutBrand />
+        <FeaturedHighlight/>
         <Testimonials />
         {/* <InstagramFeed /> */}
       </main>

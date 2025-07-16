@@ -33,7 +33,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 0;
+  padding: 0rem 0;
 }
 
 .logo {
@@ -95,7 +95,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 2rem;
-  padding: 2rem 0;
+  padding: 0rem 0;
 }
 
 .product-card {
