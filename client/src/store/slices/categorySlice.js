@@ -48,18 +48,8 @@ export const fetchCategoryBySlug = createAsyncThunk("category/fetchCategoryBySlu
   }
 })
 
-export const createCategory = createAsyncThunk("category/createCategory", async (categoryData, { rejectWithValue }) => {
+export const createCategory = createAsyncThunk("category/createCategory", async (formData, { rejectWithValue }) => {
   try {
-    const formData = new FormData()
-    Object.keys(categoryData).forEach((key) => {
-      if (key !== "image" && categoryData[key] !== undefined) {
-        formData.append(key, categoryData[key])
-      }
-    })
-    if (categoryData.image) {
-      formData.append("image", categoryData.image)
-    }
-
     const response = await api.post("/categories", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -73,19 +63,9 @@ export const createCategory = createAsyncThunk("category/createCategory", async 
 
 export const updateCategory = createAsyncThunk(
   "category/updateCategory",
-  async ({ id, categoryData }, { rejectWithValue }) => {
+  async ({ id, data }, { rejectWithValue }) => {
     try {
-      const formData = new FormData()
-      Object.keys(categoryData).forEach((key) => {
-        if (key !== "image" && categoryData[key] !== undefined) {
-          formData.append(key, categoryData[key])
-        }
-      })
-      if (categoryData.image) {
-        formData.append("image", categoryData.image)
-      }
-
-      const response = await api.put(`/categories/${id}`, formData, {
+      const response = await api.put(`/categories/${id}`, data, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

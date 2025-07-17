@@ -11,7 +11,9 @@ import {
 
 const BannersManagement = () => {
   const dispatch = useDispatch();
-  const { allBanners, loadingAll: isLoading, error } = useSelector((state) => state.banners);
+  const { banners: allBanners, loadingAll: isLoading, error } = useSelector(
+    (state) => state.banners
+  );
 
   const [showModal, setShowModal] = useState(false);
   const [editingBanner, setEditingBanner] = useState(null);
@@ -58,8 +60,14 @@ const BannersManagement = () => {
 
     try {
       if (editingBanner) {
-        await dispatch(updateBanner({ bannerId: editingBanner._id, bannerData: formDataToSend })).unwrap();
+        await dispatch(
+          updateBanner({ bannerId: editingBanner._id, bannerData: formDataToSend })
+        ).unwrap();
       } else {
+        if (!imageFile) {
+          alert("Please select an image for the banner.");
+          return;
+        }
         await dispatch(createBanner(formDataToSend)).unwrap();
       }
       setShowModal(false);
@@ -239,13 +247,35 @@ const BannersManagement = () => {
       {showModal && (
         <div className="fixed inset-0 z-50 w-full h-full overflow-y-auto bg-gray-600 bg-opacity-50">
           <div className="relative w-11/12 max-w-3xl p-5 mx-auto bg-white border rounded-md shadow-lg top-20">
-            {/* Modal Content */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <h3 className="text-lg font-medium text-gray-900">
                 {editingBanner ? "Edit Banner" : "Add New Banner"}
               </h3>
-              {/* Inputs here */}
-              {/* ... Keep your input form implementation unchanged ... */}
+
+              {/* Image Upload */}
+              <div>
+                <label className="block mb-1 font-medium">Banner Image</label>
+                <input type="file" accept="image/*" onChange={handleImageChange} />
+                {imagePreview && (
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full mt-2 rounded-md h-48 object-cover"
+                  />
+                )}
+              </div>
+
+              {/* Other Inputs */}
+              <input
+                type="text"
+                placeholder="Title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+                className="w-full px-3 py-2 border rounded"
+              />
+              {/* Add more inputs as needed here */}
+
               <div className="flex justify-end pt-4 space-x-3">
                 <button
                   type="button"

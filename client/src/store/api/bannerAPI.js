@@ -16,12 +16,18 @@ api.interceptors.request.use((config) => {
 });
 
 const bannerAPI = {
-  getAllBanners: (params) => axios.get(`${API_BASE_URL}/banners`, { params }), // can pass type, isActive as query params
-  getHeroBanners: () => axios.get(`${API_BASE_URL}/banners/hero`),
-  getPromoBanners: () => axios.get(`${API_BASE_URL}/banners/promo`),
-  createBanner: (bannerData) => axios.post(`${API_BASE_URL}/banners`, bannerData),
-  updateBanner: (id, bannerData) => axios.put(`${API_BASE_URL}/banners/${id}`, bannerData),
-  deleteBanner: (id) => axios.delete(`${API_BASE_URL}/banners/${id}`),
+  getAllBanners: (params) => api.get("/banners", { params }), // can pass type, isActive as query params
+  getHeroBanners: () => api.get("/banners/hero"),
+  getPromoBanners: () => api.get("/banners/promo"),
+  createBanner: (bannerData) =>
+    api.post("/banners", bannerData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  updateBanner: (id, bannerData) =>
+    api.put(`/banners/${id}`, bannerData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  deleteBanner: (id) => api.delete(`/banners/${id}`),
 };
 
 export { bannerAPI };

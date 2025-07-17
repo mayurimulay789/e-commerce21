@@ -1,7 +1,9 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-// Authentication middleware to protect routes
+// =============================
+// 🔒 Authentication Middleware
+// =============================
 const protect = async (req, res, next) => {
   try {
     const authHeader = req.header("Authorization");
@@ -13,7 +15,7 @@ const protect = async (req, res, next) => {
       });
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
+    const token = authHeader.split(" ")[1].trim();
 
     if (!token) {
       return res.status(401).json({
@@ -22,9 +24,10 @@ const protect = async (req, res, next) => {
       });
     }
 
+    // Verify JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Check token expiry
+    // Optional: Check token expiry manually if needed (jwt.verify already handles expiry)
     if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
       return res.status(401).json({
         success: false,
@@ -32,8 +35,9 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // Find user
+    // Find user by decoded userId
     const user = await User.findById(decoded.userId).select("-otp -otpExpiry");
+
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -42,12 +46,13 @@ const protect = async (req, res, next) => {
     }
 
     if (!user.isVerified) {
-      return res.status(401).json({
+      return res.status(403).json({
         success: false,
         message: "Account not verified. Please complete verification.",
       });
     }
 
+    // Attach user to request object
     req.user = {
       userId: user._id,
       role: user.role,
@@ -59,14 +64,16 @@ const protect = async (req, res, next) => {
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);
-    res.status(500).json({
+    return res.status(401).json({
       success: false,
-      message: "Authentication failed. Please try again.",
+      message: "Invalid or expired token. Please login again.",
     });
   }
 };
 
-// Admin-only middleware
+// =============================
+// 🔒 Admin-only Middleware
+// =============================
 const adminAuth = (req, res, next) => {
   if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({
@@ -77,9 +84,12 @@ const adminAuth = (req, res, next) => {
   next();
 };
 
-// Digital Marketer-only middleware
+// =============================
+// 🔒 Digital Marketer-only Middleware
+// =============================
+
 const digitalMarketerAuth = (req, res, next) => {
-  if (!req.user || req.user.role !== "digital_marketer") {
+  if (!req.user || (req.user.role !== "digitalMarketer" && req.user.role !== "admin")) {
     return res.status(403).json({
       success: false,
       message: "Access denied. Digital Marketer privileges required.",
@@ -87,6 +97,7 @@ const digitalMarketerAuth = (req, res, next) => {
   }
   next();
 };
+
 
 module.exports = {
   protect,

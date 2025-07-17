@@ -70,10 +70,10 @@ router.put("/categories/:id", adminAuth, upload.single("image"), updateCategory)
 router.delete("/categories/:id", adminAuth, deleteCategory);
 
 // Banner Management (Admin & Digital Marketer)
-router.get("/banners", digitalMarketerAuth, getAllBanners);
-router.post("/banners", digitalMarketerAuth, upload.single("image"), createBanner);
-router.put("/banners/:id", digitalMarketerAuth, upload.single("image"), updateBanner);
-router.delete("/banners/:id", digitalMarketerAuth, deleteBanner);
+router.get("/banners", adminAuth, getAllBanners);
+router.post("/banners", adminAuth, upload.single("image"), createBanner);
+router.put("/banners/:id", adminAuth, upload.single("image"), updateBanner);
+router.delete("/banners/:id", adminAuth, deleteBanner);
 
 // Coupon Management (Admin only)
 router.get("/coupons", adminAuth, getAllCoupons);

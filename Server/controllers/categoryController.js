@@ -43,7 +43,7 @@ const getCategoryBySlug = async (req, res) => {
 
     res.status(200).json({ category });
   } catch (error) {
-    console.error("Get category error:", error);
+    console.error("Get category by slug error:", error);
     res.status(500).json({ message: "Failed to fetch category" });
   }
 };
@@ -54,6 +54,10 @@ const getCategoryBySlug = async (req, res) => {
 const createCategory = async (req, res) => {
   try {
     const { name, description, parentCategory, showOnHomepage, sortOrder } = req.body;
+
+    if (!name || typeof name !== "string" || name.trim() === "") {
+      return res.status(400).json({ message: "Category name is required and must be a string." });
+    }
 
     // Check if category already exists
     const existingCategory = await Category.findOne({
@@ -74,13 +78,13 @@ const createCategory = async (req, res) => {
       };
     }
 
-    // Generate unique slug
-    let newSlug = slugify(name, { lower: true, strict: true });
+    // Generate unique slug safely
+    let newSlug = slugify(name || "", { lower: true, strict: true });
     let slugExists = await Category.findOne({ slug: newSlug });
 
     let suffix = 1;
     while (slugExists) {
-      newSlug = `${slugify(name, { lower: true, strict: true })}-${suffix}`;
+      newSlug = `${slugify(name || "", { lower: true, strict: true })}-${suffix}`;
       slugExists = await Category.findOne({ slug: newSlug });
       suffix++;
     }
@@ -88,7 +92,7 @@ const createCategory = async (req, res) => {
     const category = new Category({
       name,
       slug: newSlug,
-      description,
+      description: description || "",
       image: imageData,
       parentCategory: parentCategory || null,
       showOnHomepage: showOnHomepage !== undefined ? showOnHomepage : true,
@@ -135,14 +139,14 @@ const updateCategory = async (req, res) => {
     }
 
     // Update name and generate unique slug if name changed
-    if (name) {
+    if (name && typeof name === "string" && name.trim() !== "") {
       category.name = name;
-      let newSlug = slugify(name, { lower: true, strict: true });
+      let newSlug = slugify(name || "", { lower: true, strict: true });
 
       let slugExists = await Category.findOne({ slug: newSlug, _id: { $ne: id } });
       let suffix = 1;
       while (slugExists) {
-        newSlug = `${slugify(name, { lower: true, strict: true })}-${suffix}`;
+        newSlug = `${slugify(name || "", { lower: true, strict: true })}-${suffix}`;
         slugExists = await Category.findOne({ slug: newSlug, _id: { $ne: id } });
         suffix++;
       }

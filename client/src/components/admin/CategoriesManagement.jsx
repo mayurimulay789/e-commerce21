@@ -38,12 +38,17 @@ const CategoriesManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (!formData.name || formData.name.trim() === "") {
+    alert("Category name is required");
+    return;
+  }
     const formDataToSend = new FormData()
-
-    Object.keys(formData).forEach((key) => {
-      formDataToSend.append(key, formData[key])
-    })
-
+Object.keys(formData).forEach((key) => {
+    if (formData[key] !== undefined && formData[key] !== null) {
+      formDataToSend.append(key, formData[key]);
+    }
+  });
     if (imageFile) {
       formDataToSend.append("image", imageFile)
     }

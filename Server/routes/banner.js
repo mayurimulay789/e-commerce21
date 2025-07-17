@@ -18,7 +18,15 @@ router.get("/hero", getHeroBanners);
 router.get("/promo", getPromoBanners);
 
 // Digital Marketer / Admin routes
-router.get("/admin", protect, digitalMarketerAuth, getAllBanners);
+router.get("/admin", protect, (req, res, next) => {
+  if (req.user.role === "admin" || req.user.role === "digitalMarketer") {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    message: "Access denied. Admin or Digital Marketer privileges required.",
+  });
+}, getAllBanners);
 router.post("/", protect, digitalMarketerAuth, upload.single("image"), createBanner);
 router.put("/:id", protect, digitalMarketerAuth, upload.single("image"), updateBanner);
 router.delete("/:id", protect, digitalMarketerAuth, deleteBanner);
